@@ -17,7 +17,7 @@ I created this tool to explore the potential misuse of privileges granted to the
 
 ### Beyond DnsAdmins  
 Manipulating DNS entries isn’t exclusive to the `DnsAdmins` group. Other scenarios can also enable such attacks, such as:  
-- DNS zones with insecure updates enabled 
+- DNS zones with **insecure updates** enabled 
 - Controlling HOSTS file entries on client machines
 
 
@@ -52,8 +52,11 @@ Building upon the concept, I started from the great [KrbRelay](https://github.co
 - **Background Consoles**:  
   These are ideal for managing multiple SMB consoles simultaneously.  
 
+## Blog
+In this [post](https://decoder.cloud/2024/11/26/group-policy-nightmares-pt2/), I describe the use case that led me to develop this tool.
 ### Related Tools  
 For a similar Python-based tool built on Impacket libraries, check out [krbjack](https://github.com/almandin/krbjack).  
+
 
 ---
 
