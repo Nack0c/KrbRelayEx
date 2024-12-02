@@ -10,7 +10,6 @@ namespace SMBLibrary
     {
         // The bits in positions 16 through 31 are object specific.
         DELETE = 0x00010000,
-
         READ_CONTROL = 0x00020000,
         WRITE_DAC = 0x00040000,
         WRITE_OWNER = 0x00080000,

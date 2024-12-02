@@ -1,10 +1,9 @@
-/* Copyright (C) 2017 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+/* Copyright (C) 2017-2024 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
 using System;
 using System.Collections.Generic;
 using Utilities;
@@ -23,7 +22,6 @@ namespace SMBLibrary.SMB2
         /// This field MUST be set to 0 if there are no subsequent contexts.
         /// </summary>
         public uint Next;
-
         private ushort NameOffset; // The offset from the beginning of this structure to the 8-byte aligned name value
         private ushort NameLength;
         public ushort Reserved;
@@ -46,7 +44,7 @@ namespace SMBLibrary.SMB2
             DataLength = LittleEndianConverter.ToUInt32(buffer, offset + 12);
             if (NameLength > 0)
             {
-                Name = ByteReader.ReadUTF16String(buffer, offset + NameOffset, NameLength / 2);
+                Name = ByteReader.ReadAnsiString(buffer, offset + NameOffset, NameLength);
             }
             if (DataLength > 0)
             {
@@ -58,24 +56,25 @@ namespace SMBLibrary.SMB2
         {
             LittleEndianWriter.WriteUInt32(buffer, offset + 0, Next);
             NameOffset = 0;
-            NameLength = (ushort)(Name.Length * 2);
+            NameLength = (ushort)Name.Length;
             if (Name.Length > 0)
             {
-                NameOffset = (ushort)FixedLength;
+                NameOffset = FixedLength;
             }
             LittleEndianWriter.WriteUInt16(buffer, offset + 4, NameOffset);
             LittleEndianWriter.WriteUInt16(buffer, offset + 6, NameLength);
             LittleEndianWriter.WriteUInt16(buffer, offset + 8, Reserved);
-            DataOffset = 0;
+            DataOffset = (ushort)(FixedLength + NameLength);
             DataLength = (uint)Data.Length;
             if (Data.Length > 0)
             {
-                int paddedNameLength = (int)Math.Ceiling((double)(Name.Length * 2) / 8) * 8;
+                int paddedNameLength = (int)Math.Ceiling((double)Name.Length / 8) * 8;
                 DataOffset = (ushort)(FixedLength + paddedNameLength);
             }
             LittleEndianWriter.WriteUInt16(buffer, offset + 10, DataOffset);
-            ByteWriter.WriteUTF16String(buffer, NameOffset, Name);
-            ByteWriter.WriteBytes(buffer, DataOffset, Data);
+            LittleEndianWriter.WriteUInt32(buffer, offset + 12, DataLength);
+            ByteWriter.WriteAnsiString(buffer, offset + NameOffset, Name);
+            ByteWriter.WriteBytes(buffer, offset + DataOffset, Data);
         }
 
         public int Length
@@ -132,7 +131,7 @@ namespace SMBLibrary.SMB2
         public static int GetCreateContextListLength(List<CreateContext> createContexts)
         {
             int result = 0;
-            for (int index = 0; index < createContexts.Count; index++)
+            for(int index = 0; index < createContexts.Count; index++)
             {
                 CreateContext createContext = createContexts[index];
                 int length = createContext.Length;

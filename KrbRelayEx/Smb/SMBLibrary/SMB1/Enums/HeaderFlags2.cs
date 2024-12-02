@@ -17,7 +17,6 @@ namespace SMBLibrary.SMB1
         /// Indicates that the client or server supports extended security
         /// </summary>
         ExtendedSecurity = 0x0800, // SMB_FLAGS2_EXTENDED_SECURITY
-
         DFS = 0x1000, // SMB_FLAGS2_DFS
         ReadIfExecute = 0x2000, // SMB_FLAGS2_PAGING_IO
         NTStatusCode = 0x4000, // SMB_FLAGS2_NT_STATUS

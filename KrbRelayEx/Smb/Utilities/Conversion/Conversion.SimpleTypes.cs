@@ -1,16 +1,15 @@
 /* Copyright (C) 2005-2020 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
 using System;
 
 namespace Utilities
 {
-    public partial class Conversion
-    {
+	public partial class Conversion
+	{
         public static short ToInt16(object obj)
         {
             return ToInt16(obj, 0);
@@ -36,20 +35,20 @@ namespace Utilities
             return ToInt32(obj, 0);
         }
 
-        public static int ToInt32(object obj, int defaultValue)
-        {
+		public static int ToInt32(object obj, int defaultValue)
+		{
             int result = defaultValue;
-            if (obj != null)
-            {
-                try
-                {
-                    result = Convert.ToInt32(obj);
-                }
-                catch
-                { }
-            }
-            return result;
-        }
+			if (obj != null)
+			{
+				try
+				{
+					result = Convert.ToInt32(obj);
+				}
+				catch
+				{}
+			}
+			return result;
+		}
 
         public static long ToInt64(object obj)
         {
@@ -136,20 +135,20 @@ namespace Utilities
             return ToFloat(obj, 0);
         }
 
-        public static float ToFloat(object obj, float defaultValue)
-        {
+		public static float ToFloat(object obj, float defaultValue)
+		{
             float result = defaultValue;
-            if (obj != null)
-            {
-                try
-                {
-                    result = Convert.ToSingle(obj);
-                }
-                catch
-                { }
-            }
-            return result;
-        }
+			if (obj != null)
+			{
+				try
+				{
+					result = Convert.ToSingle(obj);
+				}
+				catch
+				{}
+			}
+			return result;
+		}
 
         public static double ToDouble(object obj)
         {
@@ -221,7 +220,7 @@ namespace Utilities
                     result = Convert.ToString(obj);
                 }
                 catch
-                { }
+                {}
             }
             return result;
         }
@@ -265,5 +264,5 @@ namespace Utilities
             }
             return result;
         }
-    }
+	}
 }

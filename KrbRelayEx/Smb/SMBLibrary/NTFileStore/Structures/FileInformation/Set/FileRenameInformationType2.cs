@@ -1,17 +1,16 @@
-/* Copyright (C) 2014-2017 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+/* Copyright (C) 2014-2024 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
 using System;
 using Utilities;
 
 namespace SMBLibrary
 {
     /// <summary>
-    /// [MS-FSCC] 2.4.34.2 - FileRenameInformation Type 2
+    /// [MS-FSCC] 2.4.37.2 - FileRenameInformation Type 2
     /// </summary>
     /// <remarks>
     /// [MS-FSA] 2.1.5.14.11
@@ -23,12 +22,11 @@ namespace SMBLibrary
         public const int FixedLength = 20;
 
         public bool ReplaceIfExists;
-
         // 7 reserved bytes
         public ulong RootDirectory;
-
         private uint FileNameLength;
         public string FileName = String.Empty;
+        // Padding - the number of bytes required to make the size of this structure at least 24.
 
         public FileRenameInformationType2()
         {
@@ -63,7 +61,7 @@ namespace SMBLibrary
         {
             get
             {
-                return FixedLength + FileName.Length * 2;
+                return Math.Max(FixedLength + FileName.Length * 2, 24);
             }
         }
     }

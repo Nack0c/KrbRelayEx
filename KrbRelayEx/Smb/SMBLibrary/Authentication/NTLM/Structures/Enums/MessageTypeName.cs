@@ -1,3 +1,4 @@
+
 namespace SMBLibrary.Authentication.NTLM
 {
     public enum MessageTypeName : uint

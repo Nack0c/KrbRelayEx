@@ -18,7 +18,6 @@ namespace SMBLibrary.SMB1
         /// The file has no other attributes set. This attribute is valid only if used alone.
         /// </summary>
         Normal = 0x00000080,          // ATTR_NORMAL
-
         Temporary = 0x00000100,       // ATTR_TEMPORARY
         Sparse = 0x00000200,          // ATTR_SPARSE, SMB 1.0 Addition
         ReparsePoint = 0x00000400,    // ATTR_REPARSE_POINT, SMB 1.0 Addition

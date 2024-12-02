@@ -9,7 +9,6 @@ namespace SMBLibrary.SMB1
         /// The server supports the use of SMB_FILE_ATTRIBUTES exclusive search attributes in client requests.
         /// </summary>
         SMB_SUPPORT_SEARCH_BITS = 0x0001,
-
         SMB_SHARE_IS_IN_DFS = 0x0002,
 
         SMB_CSC_CACHE_MANUAL_REINT = 0x0000, // SMB_CSC_MASK = 0

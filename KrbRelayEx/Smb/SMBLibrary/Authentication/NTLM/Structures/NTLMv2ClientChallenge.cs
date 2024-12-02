@@ -1,11 +1,11 @@
 /* Copyright (C) 2014-2017 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
 using System;
+using System.Collections.Generic;
 using System.Text;
 using Utilities;
 
@@ -45,12 +45,21 @@ namespace SMBLibrary.Authentication.NTLM
         }
 
         public NTLMv2ClientChallenge(DateTime timeStamp, byte[] clientChallenge, KeyValuePairList<AVPairKey, byte[]> targetInfo)
+            : this(timeStamp, clientChallenge, targetInfo, null)
+        {
+        }
+
+        public NTLMv2ClientChallenge(DateTime timeStamp, byte[] clientChallenge, KeyValuePairList<AVPairKey, byte[]> targetInfo, string spn)
         {
             CurrentVersion = StructureVersion;
             MaximumSupportedVersion = StructureVersion;
             TimeStamp = timeStamp;
             ClientChallenge = clientChallenge;
             AVPairs = targetInfo;
+            if (!string.IsNullOrEmpty(spn))
+            {
+                AVPairs.Add(AVPairKey.TargetName, UnicodeEncoding.Unicode.GetBytes(spn));
+            }
         }
 
         public NTLMv2ClientChallenge(byte[] buffer) : this(buffer, 0)
@@ -72,7 +81,7 @@ namespace SMBLibrary.Authentication.NTLM
         public byte[] GetBytes()
         {
             byte[] sequenceBytes = AVPairUtils.GetAVPairSequenceBytes(AVPairs);
-
+            
             byte[] buffer = new byte[28 + sequenceBytes.Length];
             ByteWriter.WriteByte(buffer, 0, CurrentVersion);
             ByteWriter.WriteByte(buffer, 1, MaximumSupportedVersion);

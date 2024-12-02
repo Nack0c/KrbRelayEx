@@ -1,3 +1,4 @@
+
 namespace SMBLibrary.Server
 {
     public enum SMBDialect

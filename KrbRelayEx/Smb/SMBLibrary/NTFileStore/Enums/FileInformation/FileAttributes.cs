@@ -3,7 +3,7 @@ using System;
 namespace SMBLibrary
 {
     /// <summary>
-    /// [MS-FSCC] 2.6 - FileAttributes
+    /// [MS-FSCC] 2.6 - FileAttributes 
     /// </summary>
     [Flags]
     public enum FileAttributes : uint
@@ -13,13 +13,12 @@ namespace SMBLibrary
         System = 0x00000004,            // FILE_ATTRIBUTE_SYSTEM
         Directory = 0x00000010,         // FILE_ATTRIBUTE_DIRECTORY
         Archive = 0x00000020,           // FILE_ATTRIBUTE_ARCHIVE
-
+        
         /// <summary>
         /// A file that does not have other attributes set.
         /// This attribute is valid only when used alone.
         /// </summary>
         Normal = 0x00000080,            // FILE_ATTRIBUTE_NORMAL
-
         Temporary = 0x00000100,         // FILE_ATTRIBUTE_TEMPORARY
         SparseFile = 0x00000200,        // FILE_ATTRIBUTE_SPARSE_FILE
         ReparsePoint = 0x00000400,      // FILE_ATTRIBUTE_REPARSE_POINT

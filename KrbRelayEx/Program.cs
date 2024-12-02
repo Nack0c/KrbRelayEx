@@ -39,7 +39,7 @@ namespace KrbRelay
     internal class Program
     {
 
-        public const string Version = "V1.0";
+        public const string Version = "V1.1";
         public static string DcomHost = "";
         public static string RedirectHost = "";
         public static string FakeSPN = "";
@@ -219,13 +219,6 @@ byte[] securityBlob = new byte[securityBufferLength];
             Console.WriteLine("██╔═██╗ ██╔══██╗██╔══██╗██╔══██╗██╔══╝  ██║     ██╔══██║  ╚██╔╝  ██╔══╝   ██╔██");
             Console.WriteLine("██║  ██╗██║  ██║██████╔╝██║  ██║███████╗███████╗██║  ██║   ██║   ███████╗██╔╝ ██╗");
             Console.WriteLine("╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝");
-
-        }
-        private static void ShowHelp()
-        {
-
-
-            PrintBanner();
             Console.WriteLine("\r\r################################################################################");
             Console.WriteLine("#                                                                              #");
             Console.WriteLine("#                        KrbRelayEx by @decoder_it                             #");
@@ -237,6 +230,14 @@ byte[] securityBlob = new byte[securityBufferLength];
             Console.WriteLine("#          Github: https://github.com/decoder-it/KrbRelayEx                    #");
             Console.WriteLine("#                                                                              #");
             Console.WriteLine("################################################################################");
+
+        }
+        private static void ShowHelp()
+        {
+
+
+            
+            
 
             Console.WriteLine();
             Console.WriteLine("Description:");
@@ -308,18 +309,19 @@ byte[] securityBlob = new byte[securityBufferLength];
         }
 
 
-    
 
 
 
-    public static void Main(string[] args)
+        public static async Task Main(string[] args)
+    //public static void Main(string[] args)
         {
             
 
 
             bool show_help = false;
-            
+
             //Guid clsId_guid = new Guid();
+            PrintBanner();
 
             foreach (var entry in args.Select((value, index) => new { index, value }))
             {
@@ -576,7 +578,7 @@ byte[] securityBlob = new byte[securityBufferLength];
                 foreach (string item in RedirectPorts)
                 {
 
-                    tcpForwarders.Add(new FakeSMBServer(int.Parse(item), RedirectHost, int.Parse(item)));
+                    tcpForwarders.Add(new FakeSMBServer(int.Parse(item), RedirectHost, int.Parse(item),item));
                 }
                 foreach (FakeSMBServer item in tcpForwarders)
                 {
@@ -589,14 +591,14 @@ byte[] securityBlob = new byte[securityBufferLength];
             
 
             Console.WriteLine("[*] Hit 'q' for quit, 'r' for restarting Relaying and Port Forwarding, 'l' for listing connected clients");
-            
+
             while (true)
             {
-                
+
                 if (Console.KeyAvailable)
                 {
-                    
-                    ConsoleKeyInfo key = Console.ReadKey(intercept: true); 
+
+                    ConsoleKeyInfo key = Console.ReadKey(intercept: true);
                     if (key.KeyChar == 'q')
                         return;
 
@@ -605,21 +607,19 @@ byte[] securityBlob = new byte[securityBufferLength];
                         SMBtcpFwd.ListConnectedClients();
 
                     }
-            
+
                     if (key.KeyChar == 'r')
                     {
                         Console.WriteLine("[!] Restarting Relay...");
-                        
+
                         SMBtcpFwd.Stop();
                         forwdardmode = false;
                         SMBtcpFwd.Start(false);
 
                     }
-                    else
-                    {
-                        Thread.Sleep(500); 
-                    }
+                    
                 }
+                Thread.Sleep(500);
             }
 
         }

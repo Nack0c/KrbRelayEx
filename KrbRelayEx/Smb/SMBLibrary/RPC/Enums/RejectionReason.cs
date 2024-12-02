@@ -1,3 +1,4 @@
+
 namespace SMBLibrary.RPC
 {
     public enum RejectionReason : ushort

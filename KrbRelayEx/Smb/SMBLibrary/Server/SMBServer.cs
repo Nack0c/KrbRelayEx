@@ -1,19 +1,18 @@
-/* Copyright (C) 2014-2021 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+/* Copyright (C) 2014-2024 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
-using SMBLibrary.Authentication.GSSAPI;
-using SMBLibrary.NetBios;
-using SMBLibrary.SMB1;
-using SMBLibrary.SMB2;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using SMBLibrary.Authentication.GSSAPI;
+using SMBLibrary.NetBios;
+using SMBLibrary.SMB1;
+using SMBLibrary.SMB2;
 using Utilities;
 
 namespace SMBLibrary.Server
@@ -33,6 +32,9 @@ namespace SMBLibrary.Server
 
         private ConnectionManager m_connectionManager;
         private Thread m_sendSMBKeepAliveThread;
+#if !NET20
+        private CancellationTokenSource m_sendSMBKeepAliveCancellationTokenSource;
+#endif
 
         private IPAddress m_serverAddress;
         private SMBTransportType m_transport;
@@ -44,7 +46,6 @@ namespace SMBLibrary.Server
         private DateTime m_serverStartTime;
 
         public event EventHandler<ConnectionRequestEventArgs> ConnectionRequested;
-
         public event EventHandler<LogEntry> LogEntryAdded;
 
         public SMBServer(SMBShareCollection shares, GSSProvider securityProvider)
@@ -83,7 +84,7 @@ namespace SMBLibrary.Server
             Start(serverAddress, transport, port, enableSMB1, enableSMB2, enableSMB3, connectionInactivityTimeout);
         }
 
-        private void Start(IPAddress serverAddress, SMBTransportType transport, int port, bool enableSMB1, bool enableSMB2, bool enableSMB3, TimeSpan? connectionInactivityTimeout)
+        protected internal void Start(IPAddress serverAddress, SMBTransportType transport, int port, bool enableSMB1, bool enableSMB2, bool enableSMB3, TimeSpan? connectionInactivityTimeout)
         {
             if (!m_listening)
             {
@@ -108,11 +109,22 @@ namespace SMBLibrary.Server
 
                 if (connectionInactivityTimeout.HasValue)
                 {
-                    m_sendSMBKeepAliveThread = new Thread(delegate ()
+#if !NET20
+                    m_sendSMBKeepAliveCancellationTokenSource = new CancellationTokenSource();
+#endif
+                    m_sendSMBKeepAliveThread = new Thread(delegate()
                     {
                         while (m_listening)
                         {
+#if NET20
                             Thread.Sleep(InactivityMonitoringInterval);
+#else
+                            bool cancelled = m_sendSMBKeepAliveCancellationTokenSource.Token.WaitHandle.WaitOne(InactivityMonitoringInterval);
+                            if (cancelled)
+                            {
+                                return;
+                            }
+#endif
                             m_connectionManager.SendSMBKeepAlive(connectionInactivityTimeout.Value);
                         }
                     });
@@ -128,7 +140,11 @@ namespace SMBLibrary.Server
             m_listening = false;
             if (m_sendSMBKeepAliveThread != null)
             {
+#if NET20
                 m_sendSMBKeepAliveThread.Abort();
+#else
+                m_sendSMBKeepAliveCancellationTokenSource?.Cancel();
+#endif
             }
             SocketUtils.ReleaseSocket(m_listenerSocket);
             m_connectionManager.ReleaseAllConnections();
@@ -180,7 +196,7 @@ namespace SMBLibrary.Server
             {
                 ConnectionState state = new ConnectionState(clientSocket, clientEndPoint, Log);
                 state.LogToServer(Severity.Verbose, "New connection request accepted");
-                Thread senderThread = new Thread(delegate ()
+                Thread senderThread = new Thread(delegate()
                 {
                     ProcessSendQueue(state);
                 });
@@ -214,71 +230,72 @@ namespace SMBLibrary.Server
             ConnectionState state = (ConnectionState)result.AsyncState;
             Socket clientSocket = state.ClientSocket;
 
-            if (!m_listening)
+            lock (state.ReceiveBuffer)
             {
-                clientSocket.Close();
-                return;
-            }
-
-            int numberOfBytesReceived;
-            try
-            {
-                numberOfBytesReceived = clientSocket.EndReceive(result);
-            }
-            catch (ObjectDisposedException)
-            {
-                state.LogToServer(Severity.Debug, "The connection was terminated");
-                m_connectionManager.ReleaseConnection(state);
-                return;
-            }
-            catch (SocketException ex)
-            {
-                const int WSAECONNRESET = 10054;
-                if (ex.ErrorCode == WSAECONNRESET)
+                if (!m_listening)
                 {
-                    state.LogToServer(Severity.Debug, "The connection was forcibly closed by the remote host");
+                    clientSocket.Close();
+                    return;
                 }
-                else
-                {
-                    state.LogToServer(Severity.Debug, "The connection was terminated, Socket error code: {0}", ex.ErrorCode);
-                }
-                m_connectionManager.ReleaseConnection(state);
-                return;
-            }
 
-            if (numberOfBytesReceived == 0)
-            {
-                state.LogToServer(Severity.Debug, "The client closed the connection");
-                m_connectionManager.ReleaseConnection(state);
-                return;
-            }
-
-            state.UpdateLastReceiveDT();
-            NBTConnectionReceiveBuffer receiveBuffer = state.ReceiveBuffer;
-            receiveBuffer.SetNumberOfBytesReceived(numberOfBytesReceived);
-            ProcessConnectionBuffer(ref state);
-
-            if (clientSocket.Connected)
-            {
+                int numberOfBytesReceived;
                 try
                 {
-                    clientSocket.BeginReceive(state.ReceiveBuffer.Buffer, state.ReceiveBuffer.WriteOffset, state.ReceiveBuffer.AvailableLength, 0, ReceiveCallback, state);
+                    numberOfBytesReceived = clientSocket.EndReceive(result);
                 }
                 catch (ObjectDisposedException)
                 {
+                    state.LogToServer(Severity.Debug, "The connection was terminated");
                     m_connectionManager.ReleaseConnection(state);
+                    return;
                 }
-                catch (SocketException)
+                catch (SocketException ex)
                 {
+                    const int WSAECONNRESET = 10054;
+                    if (ex.ErrorCode == WSAECONNRESET)
+                    {
+                        state.LogToServer(Severity.Debug, "The connection was forcibly closed by the remote host");
+                    }
+                    else
+                    {
+                        state.LogToServer(Severity.Debug, "The connection was terminated, Socket error code: {0}", ex.ErrorCode);
+                    }
                     m_connectionManager.ReleaseConnection(state);
+                    return;
+                }
+
+                if (numberOfBytesReceived == 0)
+                {
+                    state.LogToServer(Severity.Debug, "The client closed the connection");
+                    m_connectionManager.ReleaseConnection(state);
+                    return;
+                }
+
+                state.UpdateLastReceiveDT();
+                NBTConnectionReceiveBuffer receiveBuffer = state.ReceiveBuffer;
+                receiveBuffer.SetNumberOfBytesReceived(numberOfBytesReceived);
+                ProcessConnectionBuffer(ref state);
+
+                if (clientSocket.Connected)
+                {
+                    try
+                    {
+                        clientSocket.BeginReceive(state.ReceiveBuffer.Buffer, state.ReceiveBuffer.WriteOffset, state.ReceiveBuffer.AvailableLength, 0, ReceiveCallback, state);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        m_connectionManager.ReleaseConnection(state);
+                    }
+                    catch (SocketException)
+                    {
+                        m_connectionManager.ReleaseConnection(state);
+                    }
                 }
             }
         }
 
         private void ProcessConnectionBuffer(ref ConnectionState state)
         {
-            Socket clientSocket = state.ClientSocket;
-
             NBTConnectionReceiveBuffer receiveBuffer = state.ReceiveBuffer;
             while (receiveBuffer.HasCompletePacket())
             {
@@ -290,6 +307,7 @@ namespace SMBLibrary.Server
                 catch (Exception ex)
                 {
                     state.ClientSocket.Close();
+                    state.ReceiveBuffer.Dispose();
                     state.LogToServer(Severity.Warning, "Rejected Invalid NetBIOS session packet: {0}", ex.Message);
                     break;
                 }
@@ -316,6 +334,7 @@ namespace SMBLibrary.Server
                     {
                         state.LogToServer(Severity.Verbose, "Rejected SMB1 message");
                         state.ClientSocket.Close();
+                        state.ReceiveBuffer.Dispose();
                         return;
                     }
 
@@ -328,6 +347,7 @@ namespace SMBLibrary.Server
                     {
                         state.LogToServer(Severity.Warning, "Invalid SMB1 message: " + ex.Message);
                         state.ClientSocket.Close();
+                        state.ReceiveBuffer.Dispose();
                         return;
                     }
                     state.LogToServer(Severity.Verbose, "SMB1 message received: {0} requests, First request: {1}, Packet length: {2}", message.Commands.Count, message.Commands[0].CommandName.ToString(), packet.Length);
@@ -366,6 +386,7 @@ namespace SMBLibrary.Server
                     {
                         state.LogToServer(Severity.Verbose, "Rejected SMB2 message");
                         state.ClientSocket.Close();
+                        state.ReceiveBuffer.Dispose();
                         return;
                     }
 
@@ -378,6 +399,7 @@ namespace SMBLibrary.Server
                     {
                         state.LogToServer(Severity.Warning, "Invalid SMB2 request chain: " + ex.Message);
                         state.ClientSocket.Close();
+                        state.ReceiveBuffer.Dispose();
                         return;
                     }
                     state.LogToServer(Severity.Verbose, "SMB2 request chain received: {0} requests, First request: {1}, Packet length: {2}", requestChain.Count, requestChain[0].CommandName.ToString(), packet.Length);
@@ -402,6 +424,7 @@ namespace SMBLibrary.Server
             {
                 state.LogToServer(Severity.Warning, "Inappropriate NetBIOS session packet");
                 state.ClientSocket.Close();
+                state.ReceiveBuffer.Dispose();
                 return;
             }
         }

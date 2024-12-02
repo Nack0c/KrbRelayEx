@@ -17,9 +17,8 @@ namespace SMBLibrary.Authentication.NTLM
         /// If both are set then LanManagerSessionKey must be ignored
         /// </summary>
         LanManagerSessionKey = 0x00000080,    // NTLMSSP_NEGOTIATE_LM_KEY
-
         NTLMSessionSecurity = 0x00000200,     // NTLMSSP_NEGOTIATE_NTLM
-
+        
         /// <summary>
         /// If set, the connection SHOULD be anonymous
         /// </summary>
@@ -37,7 +36,6 @@ namespace SMBLibrary.Authentication.NTLM
         /// NTLM v2 requires this flag to be set.
         /// </summary>
         ExtendedSessionSecurity = 0x00080000, // NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY
-
         Identify = 0x00100000,                // NTLMSSP_NEGOTIATE_IDENTIFY
         RequestLMSessionKey = 0x00400000,     // NTLMSSP_REQUEST_NON_NT_SESSION_KEY
         TargetInfo = 0x00800000,              // NTLMSSP_NEGOTIATE_TARGET_INFO

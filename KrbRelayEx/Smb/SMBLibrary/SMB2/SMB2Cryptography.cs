@@ -1,10 +1,9 @@
-/* Copyright (C) 2020 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+/* Copyright (C) 2020-2024 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
 using System;
 using System.Security.Cryptography;
 using Utilities;
@@ -29,6 +28,9 @@ namespace SMBLibrary.SMB2
 
         public static byte[] GenerateSigningKey(byte[] sessionKey, SMB2Dialect dialect, byte[] preauthIntegrityHashValue)
         {
+            Console.WriteLine("[*] Dialect in use:{0}", dialect);
+            
+            
             if (dialect == SMB2Dialect.SMB202 || dialect == SMB2Dialect.SMB210)
             {
                 return sessionKey;
@@ -93,7 +95,7 @@ namespace SMBLibrary.SMB2
             ByteWriter.WriteBytes(buffer, SMB2TransformHeader.Length, encryptedMessage);
             return buffer;
         }
-
+        
         public static byte[] EncryptMessage(byte[] key, byte[] nonce, byte[] message, ulong sessionID, out byte[] signature)
         {
             SMB2TransformHeader transformHeader = CreateTransformHeader(nonce, message.Length, sessionID);
@@ -106,6 +108,18 @@ namespace SMBLibrary.SMB2
             byte[] associatedData = transformHeader.GetAssociatedData();
             byte[] aesCcmNonce = ByteReader.ReadBytes(transformHeader.Nonce, 0, AesCcmNonceLength);
             return Utilities.AesCcm.DecryptAndAuthenticate(key, aesCcmNonce, encryptedMessage, associatedData, transformHeader.Signature);
+        }
+
+        public static byte[] ComputeHash(HashAlgorithm hashAlgorithm, byte[] buffer)
+        {
+            if (hashAlgorithm == HashAlgorithm.SHA512)
+            {
+                return SHA512.Create().ComputeHash(buffer);
+            }
+            else
+            {
+                throw new NotSupportedException($"Hash algorithm {hashAlgorithm} is not supported");
+            }
         }
 
         private static SMB2TransformHeader CreateTransformHeader(byte[] nonce, int originalMessageLength, ulong sessionID)

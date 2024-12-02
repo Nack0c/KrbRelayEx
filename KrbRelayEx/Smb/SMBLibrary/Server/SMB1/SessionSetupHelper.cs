@@ -1,14 +1,15 @@
 /* Copyright (C) 2014-2017 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
+using System;
+using System.Collections.Generic;
+using System.Text;
 using SMBLibrary.Authentication.GSSAPI;
 using SMBLibrary.Authentication.NTLM;
 using SMBLibrary.SMB1;
-using System;
 using Utilities;
 
 namespace SMBLibrary.Server.SMB1
@@ -36,6 +37,13 @@ namespace SMBLibrary.Server.SMB1
             byte[] sessionKey = securityProvider.GetContextAttribute(state.AuthenticationContext, GSSAttributeName.SessionKey) as byte[];
             object accessToken = securityProvider.GetContextAttribute(state.AuthenticationContext, GSSAttributeName.AccessToken);
             bool? isGuest = securityProvider.GetContextAttribute(state.AuthenticationContext, GSSAttributeName.IsGuest) as bool?;
+
+            if (sessionKey != null && sessionKey.Length > 16)
+            {
+                // [MS-CIFS] 3.3.5.43 If the session key is equal to or longer than 16 bytes, only the least significant 16 bytes MUST be stored in Server.Session.SessionKey
+                sessionKey = ByteReader.ReadBytes(sessionKey, 0, 16);
+            }
+
             SMB1Session session;
             if (!isGuest.HasValue || !isGuest.Value)
             {
@@ -119,6 +127,13 @@ namespace SMBLibrary.Server.SMB1
                 byte[] sessionKey = securityProvider.GetContextAttribute(state.AuthenticationContext, GSSAttributeName.SessionKey) as byte[];
                 object accessToken = securityProvider.GetContextAttribute(state.AuthenticationContext, GSSAttributeName.AccessToken);
                 bool? isGuest = securityProvider.GetContextAttribute(state.AuthenticationContext, GSSAttributeName.IsGuest) as bool?;
+
+                if (sessionKey != null && sessionKey.Length > 16)
+                {
+                    // [MS-CIFS] 3.3.5.43 If the session key is equal to or longer than 16 bytes, only the least significant 16 bytes MUST be stored in Server.Session.SessionKey
+                    sessionKey = ByteReader.ReadBytes(sessionKey, 0, 16);
+                }
+
                 if (!isGuest.HasValue || !isGuest.Value)
                 {
                     state.LogToServer(Severity.Information, "Session Setup: User '{0}' authenticated successfully (Domain: '{1}', Workstation: '{2}', OS version: '{3}').", userName, domainName, machineName, osVersion);

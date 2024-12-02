@@ -1,13 +1,11 @@
 /* Copyright (C) 2012-2020 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
 using System;
 using System.Net.Sockets;
-
 #if NETSTANDARD2_0
 using System.Runtime.InteropServices;
 #endif
@@ -40,12 +38,12 @@ namespace Utilities
             if (IsDotNetFramework())
             {
 #endif
-            // https://msdn.microsoft.com/en-us/library/dd877220.aspx
-            byte[] tcp_keepalive = new byte[12];
-            LittleEndianWriter.WriteUInt32(tcp_keepalive, 0, Convert.ToUInt32(enable));
-            LittleEndianWriter.WriteUInt32(tcp_keepalive, 4, (uint)timeout.TotalMilliseconds);
-            LittleEndianWriter.WriteUInt32(tcp_keepalive, 8, (uint)interval.TotalMilliseconds);
-            socket.IOControl(IOControlCode.KeepAliveValues, tcp_keepalive, null);
+                // https://msdn.microsoft.com/en-us/library/dd877220.aspx
+                byte[] tcp_keepalive = new byte[12];
+                LittleEndianWriter.WriteUInt32(tcp_keepalive, 0, Convert.ToUInt32(enable));
+                LittleEndianWriter.WriteUInt32(tcp_keepalive, 4, (uint)timeout.TotalMilliseconds);
+                LittleEndianWriter.WriteUInt32(tcp_keepalive, 8, (uint)interval.TotalMilliseconds);
+                socket.IOControl(IOControlCode.KeepAliveValues, tcp_keepalive, null);
 #if NETSTANDARD2_0
             }
             else
@@ -60,7 +58,7 @@ namespace Utilities
                 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     // Note: TcpKeepAliveRetryCount is only supported on Windows since Windows 10 version 1709
-                    // For uniformity, we make cross-platform use of the same value used in earlier Windows versions
+                    // For uniformity, we make cross-platform use of the same value used in earlier Windows versions 
                     const int RetryCount = 10;
                     socket.SetSocketOption(SocketOptionLevel.Tcp, TcpKeepAliveRetryCountOptionName, RetryCount);
                 }

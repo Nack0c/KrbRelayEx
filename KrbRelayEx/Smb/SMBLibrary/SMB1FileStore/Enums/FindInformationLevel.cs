@@ -1,3 +1,4 @@
+
 namespace SMBLibrary.SMB1
 {
     public enum FindInformationLevel : ushort
@@ -9,7 +10,7 @@ namespace SMBLibrary.SMB1
         SMB_FIND_FILE_FULL_DIRECTORY_INFO = 0x0102,
         SMB_FIND_FILE_NAMES_INFO = 0x0103,
         SMB_FIND_FILE_BOTH_DIRECTORY_INFO = 0x0104,
-        SMB_FIND_FILE_ID_FULL_DIRECTORY_INFO = 0x0105, // MS-SMB
+        SMB_FIND_FILE_ID_FULL_DIRECTORY_INFO = 0x0105, // MS-SMB 
         SMB_FIND_FILE_ID_BOTH_DIRECTORY_INFO = 0x0106, // MS-SMB
     }
 }

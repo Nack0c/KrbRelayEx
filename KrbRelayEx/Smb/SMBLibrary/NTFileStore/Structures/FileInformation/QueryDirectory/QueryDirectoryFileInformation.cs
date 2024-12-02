@@ -1,10 +1,9 @@
 /* Copyright (C) 2017 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
 using System;
 using System.Collections.Generic;
 using Utilities;
@@ -38,22 +37,16 @@ namespace SMBLibrary
             {
                 case FileInformationClass.FileDirectoryInformation:
                     return new FileDirectoryInformation(buffer, offset);
-
                 case FileInformationClass.FileFullDirectoryInformation:
                     return new FileFullDirectoryInformation(buffer, offset);
-
                 case FileInformationClass.FileBothDirectoryInformation:
                     return new FileBothDirectoryInformation(buffer, offset);
-
                 case FileInformationClass.FileNamesInformation:
                     return new FileNamesInformation(buffer, offset);
-
                 case FileInformationClass.FileIdBothDirectoryInformation:
                     return new FileIdBothDirectoryInformation(buffer, offset);
-
                 case FileInformationClass.FileIdFullDirectoryInformation:
                     return new FileIdFullDirectoryInformation(buffer, offset);
-
                 default:
                     throw new NotImplementedException(String.Format("File information class {0} is not supported.", (int)fileInformationClass));
             }
@@ -100,7 +93,7 @@ namespace SMBLibrary
         public static int GetListLength(List<QueryDirectoryFileInformation> fileInformationList)
         {
             int result = 0;
-            for (int index = 0; index < fileInformationList.Count; index++)
+            for(int index = 0; index < fileInformationList.Count; index++)
             {
                 QueryDirectoryFileInformation entry = fileInformationList[index];
                 int length = entry.Length;

@@ -1,7 +1,6 @@
 /* Author: Damien Guard (damieng@gmail.com)
  * http://damieng.com/blog/2006/08/08/calculating_crc32_in_c_and_net
  */
-
 using System;
 using System.Security.Cryptography;
 
@@ -105,11 +104,11 @@ namespace Utilities
         private byte[] UInt32ToBigEndianBytes(UInt32 x)
         {
             return new byte[] {
-                (byte)((x >> 24) & 0xff),
-                (byte)((x >> 16) & 0xff),
-                (byte)((x >> 8) & 0xff),
-                (byte)(x & 0xff)
-            };
+			    (byte)((x >> 24) & 0xff),
+			    (byte)((x >> 16) & 0xff),
+			    (byte)((x >> 8) & 0xff),
+			    (byte)(x & 0xff)
+		    };
         }
 
         // Added by Tal Aloni 2013.07.11

@@ -1,3 +1,4 @@
+
 namespace SMBLibrary.NetBios
 {
     public enum NameServiceOperation : byte

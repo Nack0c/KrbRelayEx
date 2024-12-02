@@ -1,12 +1,10 @@
 /* Copyright (C) 2017 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
-using System.Diagnostics;
-using System.Security.Cryptography;
+using System;
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -86,8 +84,6 @@ namespace SMBLibrary.SMB2
             else
             {
                 LittleEndianWriter.WriteUInt32(buffer, offset + 32, Reserved);
-                //LittleEndianWriter.WriteUInt32(buffer, offset + 32, (uint)Process.GetCurrentProcess().Id);
-                
                 LittleEndianWriter.WriteUInt32(buffer, offset + 36, TreeID);
             }
             LittleEndianWriter.WriteUInt64(buffer, offset + 40, SessionID);
@@ -115,7 +111,7 @@ namespace SMBLibrary.SMB2
                 }
             }
         }
-
+        
         public bool IsAsync
         {
             get
@@ -153,7 +149,7 @@ namespace SMBLibrary.SMB2
                 }
             }
         }
-
+        
         public bool IsSigned
         {
             get

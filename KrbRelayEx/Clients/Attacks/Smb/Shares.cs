@@ -331,14 +331,16 @@ namespace KrbRelay.Clients.Attacks.Smb
         public static void listShares(SMB2Client smbClient)
         {
             //https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-srvs/8605fd54-6ede-4316-b30d-ecfafa133c1d
-            List<ShareInfo2Entry> shares = smbClient.ListShares(out var status);
+            List<string> shares = smbClient.ListShares(out var status);
             if (status == NTStatus.STATUS_SUCCESS)
             {
                 Shares.Output("Name         Path\n");
                 Shares.Output("----         ----\n");
                 foreach (var s in shares)
                 {
-                    Shares.Output(String.Format("{0, -12} {1}\n", s.NetName.Value, s.Path.Value));
+                    
+                    //Shares.Output(String.Format("{0, -12} {1}\n", s.NetName.Value, s.Path.Value));
+                    Shares.Output(String.Format("{0, -12} {1}\n", s, s));
                 }
             }
             else
@@ -562,6 +564,7 @@ namespace KrbRelay.Clients.Attacks.Smb
             isConnected = true;
             clientSocket = cSocket;
             ISMBFileStore fileStore = smbClient.TreeConnect(share, out var status);
+            Console.WriteLine("[*] SMB Console Status:{0}", status);
             if (status == NTStatus.STATUS_SUCCESS)
             {
                 while (isConnected)
@@ -676,14 +679,15 @@ namespace KrbRelay.Clients.Attacks.Smb
         public void listShares(SMB2Client smbClient)
         {
             //https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-srvs/8605fd54-6ede-4316-b30d-ecfafa133c1d
-            List<ShareInfo2Entry> shares = smbClient.ListShares(out var status);
+            //SMBLibrary.Services.ShareInfo2Entry shares = smbClient.ListShares(out NTStatus  status);
+            List<string> shares = smbClient.ListShares(out NTStatus status);
             if (status == NTStatus.STATUS_SUCCESS)
             {
                 Output("Name         Path\n");
                 Output("----         ----\n");
                 foreach (var s in shares)
                 {
-                    Output(String.Format("{0, -12} {1}\n", s.NetName.Value, s.Path.Value));
+                    Output(String.Format("{0, -12} {1}\n", s, s));
                 }
             }
             else

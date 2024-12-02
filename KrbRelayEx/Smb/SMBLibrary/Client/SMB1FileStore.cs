@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2019 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
+/* Copyright (C) 2014-2024 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
  * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
@@ -36,7 +36,7 @@ namespace SMBLibrary.Client
             request.ImpersonationLevel = ImpersonationLevel.Impersonation;
 
             TrySendMessage(request);
-            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_NT_CREATE_ANDX);
+            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_NT_CREATE_ANDX, out bool connectionTerminated);
             if (reply != null)
             {
                 if (reply.Commands[0] is NTCreateAndXResponse)
@@ -51,7 +51,7 @@ namespace SMBLibrary.Client
                     return reply.Header.Status;
                 }
             }
-            return NTStatus.STATUS_INVALID_SMB;
+            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
         }
 
         public NTStatus CloseFile(object handle)
@@ -59,12 +59,12 @@ namespace SMBLibrary.Client
             CloseRequest request = new CloseRequest();
             request.FID = (ushort)handle;
             TrySendMessage(request);
-            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_CLOSE);
+            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_CLOSE, out bool connectionTerminated);
             if (reply != null)
             {
                 return reply.Header.Status;
             }
-            return NTStatus.STATUS_INVALID_SMB;
+            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
         }
 
         public NTStatus ReadFile(out byte[] data, object handle, long offset, int maxCount)
@@ -76,7 +76,7 @@ namespace SMBLibrary.Client
             request.MaxCountLarge = (uint)maxCount;
 
             TrySendMessage(request);
-            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_READ_ANDX);
+            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_READ_ANDX, out bool connectionTerminated);
             if (reply != null)
             {
                 if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is ReadAndXResponse)
@@ -85,7 +85,7 @@ namespace SMBLibrary.Client
                 }
                 return reply.Header.Status;
             }
-            return NTStatus.STATUS_INVALID_SMB;
+            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
         }
 
         public NTStatus WriteFile(out int numberOfBytesWritten, object handle, long offset, byte[] data)
@@ -97,7 +97,7 @@ namespace SMBLibrary.Client
             request.Data = data;
 
             TrySendMessage(request);
-            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_WRITE_ANDX);
+            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_WRITE_ANDX, out bool connectionTerminated);
             if (reply != null)
             {
                 if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is WriteAndXResponse)
@@ -106,7 +106,7 @@ namespace SMBLibrary.Client
                 }
                 return reply.Header.Status;
             }
-            return NTStatus.STATUS_INVALID_SMB;
+            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
         }
 
         public NTStatus FlushFileBuffers(object handle)
@@ -150,7 +150,7 @@ namespace SMBLibrary.Client
             request.MaxDataCount = (ushort)maxOutputLength;
 
             TrySendMessage(request);
-            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2);
+            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2, out bool connectionTerminated);
             if (reply != null)
             {
                 if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is Transaction2Response)
@@ -180,8 +180,12 @@ namespace SMBLibrary.Client
                         request.MaxDataCount = (ushort)maxOutputLength;
 
                         TrySendMessage(request);
-                        reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2);
-                        if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is Transaction2Response)
+                        reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2, out connectionTerminated);
+                        if (reply == null)
+                        {
+                            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
+                        }
+                        else if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is Transaction2Response)
                         {
                             response = (Transaction2Response)reply.Commands[0];
                             Transaction2FindNext2Response nextSubcommandResponse = new Transaction2FindNext2Response(response.TransParameters, response.TransData, reply.Header.UnicodeFlag);
@@ -197,7 +201,7 @@ namespace SMBLibrary.Client
                 }
                 return reply.Header.Status;
             }
-            return NTStatus.STATUS_INVALID_SMB;
+            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
         }
 
         public NTStatus GetFileInformation(out FileInformation result, object handle, FileInformationClass informationClass)
@@ -220,7 +224,7 @@ namespace SMBLibrary.Client
                 request.MaxDataCount = (ushort)maxOutputLength;
 
                 TrySendMessage(request);
-                SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2);
+                SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2, out bool connectionTerminated);
                 if (reply != null)
                 {
                     if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is Transaction2Response)
@@ -240,7 +244,7 @@ namespace SMBLibrary.Client
                     }
                     return reply.Header.Status;
                 }
-                return NTStatus.STATUS_INVALID_SMB;
+                return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
             }
             else
             {
@@ -273,7 +277,7 @@ namespace SMBLibrary.Client
             request.MaxDataCount = (ushort)maxOutputLength;
 
             TrySendMessage(request);
-            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2);
+            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2, out bool connectionTerminated);
             if (reply != null)
             {
                 if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is Transaction2Response)
@@ -284,7 +288,7 @@ namespace SMBLibrary.Client
                 }
                 return reply.Header.Status;
             }
-            return NTStatus.STATUS_INVALID_SMB;
+            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
         }
 
         public NTStatus SetFileInformation(object handle, FileInformation information)
@@ -315,12 +319,12 @@ namespace SMBLibrary.Client
 	            request.MaxDataCount = (ushort)maxOutputLength;
 	
 	            TrySendMessage(request);
-	            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2);
+	            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2, out bool connectionTerminated);
 	            if (reply != null)
 	            {
 	                return reply.Header.Status;
 	            }
-	            return NTStatus.STATUS_INVALID_SMB;
+                return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
             }
 			else
 			{
@@ -345,12 +349,12 @@ namespace SMBLibrary.Client
             request.MaxDataCount = (ushort)maxOutputLength;
 
             TrySendMessage(request);
-            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2);
+            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2, out bool connectionTerminated);
             if (reply != null)
             {
                 return reply.Header.Status;
             }
-            return NTStatus.STATUS_INVALID_SMB;
+            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
         }
 
         public NTStatus GetFileSystemInformation(out FileSystemInformation result, FileSystemInformationClass informationClass)
@@ -372,7 +376,7 @@ namespace SMBLibrary.Client
                 request.MaxDataCount = (ushort)maxOutputLength;
 
                 TrySendMessage(request);
-                SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2);
+                SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2, out bool connectionTerminated);
                 if (reply != null)
                 {
                     if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is Transaction2Response)
@@ -383,7 +387,7 @@ namespace SMBLibrary.Client
                     }
                     return reply.Header.Status;
                 }
-                return NTStatus.STATUS_INVALID_SMB;
+                return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
             }
             else
             {
@@ -408,7 +412,7 @@ namespace SMBLibrary.Client
             request.MaxDataCount = (ushort)maxOutputLength;
 
             TrySendMessage(request);
-            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2);
+            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION2, out bool connectionTerminated);
             if (reply != null)
             {
                 if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is Transaction2Response)
@@ -419,7 +423,7 @@ namespace SMBLibrary.Client
                 }
                 return reply.Header.Status;
             }
-            return NTStatus.STATUS_INVALID_SMB;
+            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
         }
 
         public NTStatus SetFileSystemInformation(FileSystemInformation information)
@@ -446,7 +450,7 @@ namespace SMBLibrary.Client
             request.MaxDataCount = (uint)maxOutputLength;
 
             TrySendMessage(request);
-            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_NT_TRANSACT);
+            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_NT_TRANSACT, out bool connectionTerminated);
             if (reply != null)
             {
                 if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is NTTransactResponse)
@@ -457,7 +461,7 @@ namespace SMBLibrary.Client
                 }
                 return reply.Header.Status;
             }
-            return NTStatus.STATUS_INVALID_SMB;
+            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
         }
 
         public NTStatus SetSecurityInformation(object handle, SecurityInformation securityInformation, SecurityDescriptor securityDescriptor)
@@ -500,7 +504,7 @@ namespace SMBLibrary.Client
             request.MaxDataCount = (uint)maxOutputLength;
 
             TrySendMessage(request);
-            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_NT_TRANSACT);
+            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_NT_TRANSACT, out bool connectionTerminated);
             if (reply != null)
             {
                 if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is NTTransactResponse)
@@ -511,7 +515,7 @@ namespace SMBLibrary.Client
                 }
                 return reply.Header.Status;
             }
-            return NTStatus.STATUS_INVALID_SMB;
+            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
         }
 
         public NTStatus FsCtlPipeTranscieve(object handle, byte[] input, out byte[] output, int maxOutputLength)
@@ -532,7 +536,7 @@ namespace SMBLibrary.Client
             request.Name = @"\PIPE\";
 
             TrySendMessage(request);
-            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION);
+            SMB1Message reply = m_client.WaitForMessage(CommandName.SMB_COM_TRANSACTION, out bool connectionTerminated);
             if (reply != null)
             {
                 if (reply.Header.Status == NTStatus.STATUS_SUCCESS && reply.Commands[0] is TransactionResponse)
@@ -543,7 +547,7 @@ namespace SMBLibrary.Client
                 }
                 return reply.Header.Status;
             }
-            return NTStatus.STATUS_INVALID_SMB;
+            return connectionTerminated ? NTStatus.STATUS_INVALID_SMB : NTStatus.STATUS_IO_TIMEOUT;
         }
 
         public NTStatus Disconnect()
@@ -560,6 +564,10 @@ namespace SMBLibrary.Client
 
         private void TrySendMessage(SMB1Command request)
         {
+            if (!m_client.IsConnected)
+            {
+                throw new InvalidOperationException("The client is no longer connected");
+            }
             m_client.TrySendMessage(request, m_treeID);
         }
 

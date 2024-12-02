@@ -1,10 +1,9 @@
-/* Copyright (C) 2014-2018 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+/* Copyright (C) 2014-2024 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
 using System;
 using System.Collections.Generic;
 
@@ -46,8 +45,7 @@ namespace SMBLibrary.Services
             {
                 case ServerServiceOpName.NetrShareEnum:
                     {
-                        NetrShareEnumRequest request = new NetrShareEnumRequest(requestBytes);
-                        NetrShareEnumResponse response = GetNetrShareEnumResponse(request);
+                        NetrShareEnumResponse response = GetNetrShareEnumResponse(requestBytes);
                         return response.GetBytes();
                     }
                 case ServerServiceOpName.NetrShareGetInfo:
@@ -67,9 +65,27 @@ namespace SMBLibrary.Services
             }
         }
 
-        public NetrShareEnumResponse GetNetrShareEnumResponse(NetrShareEnumRequest request)
+        public NetrShareEnumResponse GetNetrShareEnumResponse(byte[] requestBytes)
         {
+            NetrShareEnumRequest request;
             NetrShareEnumResponse response = new NetrShareEnumResponse();
+            try 
+            {
+                request = new NetrShareEnumRequest(requestBytes);
+            }
+            catch (UnsupportedLevelException ex)
+            {
+                response.InfoStruct = new ShareEnum(ex.Level);
+                response.Result = Win32Error.ERROR_NOT_SUPPORTED;
+                return response;
+            }
+            catch (InvalidLevelException ex)
+            {
+                response.InfoStruct = new ShareEnum(ex.Level);
+                response.Result = Win32Error.ERROR_INVALID_LEVEL;
+                return response;
+            }
+            
             switch (request.InfoStruct.Level)
             {
                 case 0:
@@ -99,18 +115,6 @@ namespace SMBLibrary.Services
                         return response;
                     }
                 case 2:
-                    {
-                        // We ignore request.PreferedMaximumLength
-                        ShareInfo2Container info = new ShareInfo2Container();
-                        foreach (string shareName in m_shares)
-                        {
-                            info.Add(new ShareInfo2Entry(shareName, new ShareTypeExtended(ShareType.DiskDrive)));
-                        }
-                        response.InfoStruct = new ShareEnum(info);
-                        response.TotalEntries = (uint)m_shares.Count;
-                        response.Result = Win32Error.ERROR_SUCCESS;
-                        return response;
-                    }
                 case 501:
                 case 502:
                 case 503:
@@ -131,7 +135,7 @@ namespace SMBLibrary.Services
         public NetrShareGetInfoResponse GetNetrShareGetInfoResponse(NetrShareGetInfoRequest request)
         {
             int shareIndex = IndexOfShare(request.NetName);
-
+            
             NetrShareGetInfoResponse response = new NetrShareGetInfoResponse();
             if (shareIndex == -1)
             {

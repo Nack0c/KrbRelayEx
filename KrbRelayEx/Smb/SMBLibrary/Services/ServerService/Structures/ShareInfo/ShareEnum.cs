@@ -1,12 +1,11 @@
-/* Copyright (C) 2014-2018 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+/* Copyright (C) 2014-2024 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
-using SMBLibrary.RPC;
 using System;
+using SMBLibrary.RPC;
 
 namespace SMBLibrary.Services
 {
@@ -54,25 +53,18 @@ namespace SMBLibrary.Services
                     parser.ReadEmbeddedStructureFullPointer<ShareInfo0Container>(ref info0);
                     Info = info0;
                     break;
-
                 case 1:
                     ShareInfo1Container info1 = null;
                     parser.ReadEmbeddedStructureFullPointer<ShareInfo1Container>(ref info1);
                     Info = info1;
                     break;
-
                 case 2:
-                    ShareInfo2Container info2 = null;
-                    parser.ReadEmbeddedStructureFullPointer<ShareInfo2Container>(ref info2);
-                    Info = info2;
-                    break;
-
                 case 501:
                 case 502:
                 case 503:
-                    throw new NotImplementedException();
+                    throw new UnsupportedLevelException(level);
                 default:
-                    break;
+                    throw new InvalidLevelException(level);
             }
             parser.EndStructure(); // SHARE_ENUM_UNION
             parser.EndStructure(); // SHARE_ENUM_STRUCT

@@ -1,11 +1,10 @@
-/* Copyright (C) 2017-2021 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+/* Copyright (C) 2017-2022 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
-using SMBLibrary.Services;
+using System;
 using System.Collections.Generic;
 using System.Net;
 
@@ -19,11 +18,13 @@ namespace SMBLibrary.Client
 
         void Disconnect();
 
-        byte[] Login(byte[] ticket, out bool successful);
+        NTStatus Login(string domainName, string userName, string password);
+
+        NTStatus Login(string domainName, string userName, string password, AuthenticationMethod authenticationMethod);
 
         NTStatus Logoff();
 
-        List<ShareInfo2Entry> ListShares(out NTStatus status);
+        List<string> ListShares(out NTStatus status);
 
         ISMBFileStore TreeConnect(string shareName, out NTStatus status);
 
@@ -33,6 +34,11 @@ namespace SMBLibrary.Client
         }
 
         uint MaxWriteSize
+        {
+            get;
+        }
+
+        bool IsConnected
         {
             get;
         }

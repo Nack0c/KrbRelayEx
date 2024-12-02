@@ -1,6 +1,5 @@
 /* Based on https://stackoverflow.com/a/30123190/3419770
  */
-
 using System;
 using System.IO;
 using System.Security.Cryptography;

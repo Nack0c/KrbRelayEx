@@ -1,3 +1,4 @@
+
 namespace SMBLibrary
 {
     // All Win32 error codes MUST be in the range 0x0000 to 0xFFFF

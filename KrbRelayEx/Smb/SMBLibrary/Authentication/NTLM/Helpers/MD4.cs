@@ -15,6 +15,7 @@
    software for any particular purpose. It is provided "as is"
    without express or implied warranty of any kind.
 
+
    --------------------------------------------------------------
 
    Ported from Norbert Hranitzky's (norbert.hranitzky@mchp.siemens.de)
@@ -24,6 +25,7 @@
    Adapted to C# 2.0 By Tal Aloni
    --------------------------------------------------------------
 
+
 */
 
 using System.Text;
@@ -31,6 +33,7 @@ using System.Text;
 namespace System.Security.Cryptography
 {
     using System;
+
 
     /// <summary>
     ///   Implements the MD4 message digest algorithm in C#
@@ -44,7 +47,7 @@ namespace System.Security.Cryptography
     ///            The MD4 Message-Digest Algorithm</a>",
     ///         IETF RFC-1320 (informational).
     ///       </li>
-    ///     </ol>
+    ///     </ol>         
     ///   </p>
     /// </remarks>
     public class MD4
@@ -76,6 +79,7 @@ namespace System.Security.Cryptography
         ///   Number of bytes procesed so far mod. 2 power of 64.
         /// </summary>
         private long count;
+
 
         // Constructors
         //------------------------------------------------------------------------
@@ -124,6 +128,7 @@ namespace System.Security.Cryptography
                 buffer[i] = 0;
         }
 
+
         /// <summary>
         ///   Continues an MD4 message digest using the input byte
         /// </summary>
@@ -142,7 +147,7 @@ namespace System.Security.Cryptography
         ///   MD4 block update operation
         /// </summary>
         /// <remarks>
-        ///   Continues an MD4 message digest operation by filling the buffer,
+        ///   Continues an MD4 message digest operation by filling the buffer, 
         ///   transform(ing) data in 512-bit message block(s), updating the variables
         ///   context and count, and leaving (buffering) the remaining bytes in buffer
         ///   for the next update or finish.
@@ -322,6 +327,7 @@ namespace System.Security.Cryptography
                        (((uint)block[offset++] & 0xFF) << 8) |
                        (((uint)block[offset++] & 0xFF) << 16) |
                        (((uint)block[offset++] & 0xFF) << 24);
+
 
             uint A = context[0];
             uint B = context[1];

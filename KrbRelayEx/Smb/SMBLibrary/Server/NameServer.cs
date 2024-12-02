@@ -1,15 +1,17 @@
 /* Copyright (C) 2014-2018 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
-using SMBLibrary.NetBios;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
+using SMBLibrary.NetBios;
+using Utilities;
 
 namespace SMBLibrary.Server
 {
@@ -108,8 +110,8 @@ namespace SMBLibrary.Server
                             NetBiosSuffix suffix = (NetBiosSuffix)request.Question.Name[15];
 
                             bool nameMatch = String.Equals(name, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
-
-                            if (nameMatch && ((suffix == NetBiosSuffix.WorkstationService) || (suffix == NetBiosSuffix.FileServiceService)))
+                            
+                            if (nameMatch && ((suffix == NetBiosSuffix.WorkstationService) || (suffix == NetBiosSuffix.FileServerService)))
                             {
                                 PositiveNameQueryResponse response = new PositiveNameQueryResponse();
                                 response.Header.TransactionID = request.Header.TransactionID;
@@ -127,7 +129,7 @@ namespace SMBLibrary.Server
                             response.Resource.Name = request.Question.Name;
                             NameFlags nameFlags = new NameFlags();
                             string name1 = NetBiosUtils.GetMSNetBiosName(Environment.MachineName, NetBiosSuffix.WorkstationService);
-                            string name2 = NetBiosUtils.GetMSNetBiosName(Environment.MachineName, NetBiosSuffix.FileServiceService);
+                            string name2 = NetBiosUtils.GetMSNetBiosName(Environment.MachineName, NetBiosSuffix.FileServerService);
                             NameFlags nameFlags3 = new NameFlags();
                             nameFlags3.WorkGroup = true;
                             string name3 = NetBiosUtils.GetMSNetBiosName(WorkgroupName, NetBiosSuffix.WorkstationService);
@@ -162,7 +164,7 @@ namespace SMBLibrary.Server
         private void RegisterNetBIOSName()
         {
             NameRegistrationRequest request1 = new NameRegistrationRequest(Environment.MachineName, NetBiosSuffix.WorkstationService, m_serverAddress);
-            NameRegistrationRequest request2 = new NameRegistrationRequest(Environment.MachineName, NetBiosSuffix.FileServiceService, m_serverAddress);
+            NameRegistrationRequest request2 = new NameRegistrationRequest(Environment.MachineName, NetBiosSuffix.FileServerService, m_serverAddress);
             NameRegistrationRequest request3 = new NameRegistrationRequest(WorkgroupName, NetBiosSuffix.WorkstationService, m_serverAddress);
             request3.NameFlags.WorkGroup = true;
             RegisterName(request1);

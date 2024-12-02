@@ -1,15 +1,14 @@
 /* Copyright (C) 2017-2020 Tal Aloni <tal.aloni.il@gmail.com>. All rights reserved.
- *
+ * 
  * You can redistribute this program and/or modify it under the terms of
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-
+using System;
+using System.Collections.Generic;
 using SMBLibrary.NetBios;
 using SMBLibrary.Server.SMB2;
 using SMBLibrary.SMB2;
-using System;
-using System.Collections.Generic;
 using Utilities;
 
 namespace SMBLibrary.Server
@@ -259,13 +258,10 @@ namespace SMBLibrary.Server
             {
                 case SMBDialect.SMB202:
                     return SMB2Dialect.SMB202;
-
                 case SMBDialect.SMB210:
                     return SMB2Dialect.SMB210;
-
                 case SMBDialect.SMB300:
                     return SMB2Dialect.SMB300;
-
                 default:
                     throw new ArgumentException("Unsupported SMB2 Dialect: " + smbDialect.ToString());
             }

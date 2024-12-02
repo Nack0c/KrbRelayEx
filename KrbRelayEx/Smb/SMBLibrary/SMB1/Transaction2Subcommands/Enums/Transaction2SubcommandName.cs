@@ -1,3 +1,4 @@
+
 namespace SMBLibrary.SMB1
 {
     public enum Transaction2SubcommandName : ushort
