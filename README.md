@@ -1,4 +1,4 @@
-# KrbRelayEx  
+# KrbRelayEx - Manipulating DNS entries to take over the Domain
 ![image](https://github.com/user-attachments/assets/35624ed8-9c84-455a-9458-7115b51c4bde)
 
 ![Version](https://img.shields.io/badge/version-1.0-blue)  
