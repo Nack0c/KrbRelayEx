@@ -61,7 +61,7 @@ namespace SMBLibrary.Client
         private ushort m_availableCredits = 1;
         public Socket currSourceSocket;
         public Socket currDestSocket;
-        public FakeSMBServer curSocketServer;
+        public FakeSMBServer currSocketServer;
         public string ServerType = "";
 
         public SMB2Client()
@@ -212,7 +212,7 @@ namespace SMBLibrary.Client
             request.Dialects.Add(SMB2Dialect.SMB210);
             request.Dialects.Add(SMB2Dialect.SMB300);
 
-///#if SMB302_CLIENT
+            ///#if SMB302_CLIENT
             request.Dialects.Add(SMB2Dialect.SMB302);
             //#endif
             /*
@@ -323,9 +323,9 @@ namespace SMBLibrary.Client
             {
                 throw new InvalidOperationException("A connection must be successfully established before attempting login");
             }
-            
+
             success = false;
-            
+
 
             //send apReq
             SessionSetupRequest request = new SessionSetupRequest();
@@ -372,15 +372,15 @@ namespace SMBLibrary.Client
                     //Console.WriteLine("m_sessionKey--");
                     //Console.WriteLine(KrbRelay.Helpers.ByteArrayToString(m_sessionKey));
                     //Console.WriteLine("Smb Login 2");
-                    if (curSocketServer != null)
-                        curSocketServer.CloseConnection(curSocketServer.state);
+                    if (currSocketServer != null)
+                        currSocketServer.CloseConnection(currSocketServer.state);
                     success = true;
                     return ticket;
                 }
             }
-                
 
-            
+
+
             return null;
         }
         public NTStatus Logoff()

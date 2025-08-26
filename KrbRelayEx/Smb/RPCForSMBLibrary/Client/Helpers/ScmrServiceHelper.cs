@@ -1,5 +1,9 @@
+using Org.BouncyCastle.Utilities.IO;
 using SMBLibrary.Client.Helpers;
 using SMBLibrary.Services;
+using System;
+using System.IO;
+using System.Reflection.Metadata;
 using static SMBLibrary.Services.SERVICE_ENUM;
 
 namespace SMBLibrary.Client
@@ -10,7 +14,7 @@ namespace SMBLibrary.Client
         {
             ROpenSCManagerWRequest rOpenSCManagerWRequest = new ROpenSCManagerWRequest();
             rOpenSCManagerWRequest.lpDatabaseName = lpDatabaseName;
-            rOpenSCManagerWRequest.dwDesiredAccess = SERVICE_START | SERVICE_STOP | SERVICE_CHANGE_CONFIG | SERVICE_QUERY_CONFIG | SERVICE_QUERY_STATUS | SERVICE_ENUMERATE_DEPENDENTS | SC_MANAGER_ENUMERATE_SERVICE;
+            rOpenSCManagerWRequest.dwDesiredAccess = SERVICE_START | SERVICE_STOP | SERVICE_DELETE | SERVICE_CHANGE_CONFIG | SERVICE_QUERY_CONFIG | SERVICE_QUERY_STATUS | SERVICE_ENUMERATE_DEPENDENTS | SC_MANAGER_ENUMERATE_SERVICE;
 
             ROpenSCManagerWResponse rOpenSCManagerWResponse;
 
@@ -21,6 +25,7 @@ namespace SMBLibrary.Client
             }
             return rOpenSCManagerWResponse.lpScHandle;
         }
+        
 
         public static LPSC_RPC_HANDLE rCloseServiceHandle(RPCCallHelper rpc, LPSC_RPC_HANDLE handle, out NTStatus status)
         {
@@ -42,7 +47,7 @@ namespace SMBLibrary.Client
             rOpenServiceWRequest rOpenServiceWRequest = new rOpenServiceWRequest();
             rOpenServiceWRequest.hSCManager = handle;
             rOpenServiceWRequest.lpServiceName = service;
-            rOpenServiceWRequest.dwDesiredAccess = SERVICE_START | SERVICE_STOP | SERVICE_CHANGE_CONFIG | SERVICE_QUERY_CONFIG | SERVICE_QUERY_STATUS | SERVICE_ENUMERATE_DEPENDENTS | SC_MANAGER_ENUMERATE_SERVICE;
+            rOpenServiceWRequest.dwDesiredAccess = SERVICE_START | SERVICE_STOP | SERVICE_CHANGE_CONFIG | SERVICE_QUERY_CONFIG | SERVICE_QUERY_STATUS | SERVICE_ENUMERATE_DEPENDENTS | SC_MANAGER_ENUMERATE_SERVICE | SERVICE_DELETE;
 
             rOpenServiceWResponse rOpenServiceWResponse;
 
@@ -114,7 +119,7 @@ namespace SMBLibrary.Client
 
         public static SERVICE_STATUS rQueryServiceStatus(RPCCallHelper rpc, LPSC_RPC_HANDLE handle, out NTStatus status)
         {
-            rQueryServiceStatusRequest rQueryServiceStatusRequest = new rQueryServiceStatusRequest();
+            rQueryServiceStatusRequest rQueryServiceStatusRequest  = new rQueryServiceStatusRequest();
             rQueryServiceStatusRequest.hService = handle;
 
             rQueryServiceStatusResponse rQueryServiceStatusResponse;
@@ -125,6 +130,19 @@ namespace SMBLibrary.Client
                 return null;
             }
             return rQueryServiceStatusResponse.lpServiceStatus;
+        }
+        public static NTStatus rDeleteService(RPCCallHelper rpc, LPSC_RPC_HANDLE handle, out NTStatus status)
+        {
+            rDeleteServiceRequest rDeleteServiceRequest = new rDeleteServiceRequest();
+
+
+            rDeleteServiceRequest.hService = handle;
+            rDeleteServiceResponse rDeleteServiceResponse;
+            
+
+            status = rpc.ExecuteCall((ushort)ScmrServiceOpName.rDeleteService, rDeleteServiceRequest, out rDeleteServiceResponse);
+            //Console.WriteLine("[*] Delete service {0}", status);
+            return status;
         }
 
         public static QUERY_SERVICE_CONFIGW rQueryServiceConfig(RPCCallHelper rpc, LPSC_RPC_HANDLE handle, out NTStatus status)

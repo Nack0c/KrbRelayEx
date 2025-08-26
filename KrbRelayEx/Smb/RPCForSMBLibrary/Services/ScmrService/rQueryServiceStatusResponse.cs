@@ -18,3 +18,10 @@ public class rQueryServiceStatusResponse
         parser.EndStructure();
     }
 }
+public class rDeleteServiceResponse
+{
+    public void FromBytes(byte[] buffer, ref int offset)
+    {
+        // No fields to parse; NTSTATUS is returned out-of-band
+    }
+}

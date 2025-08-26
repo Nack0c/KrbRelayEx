@@ -58,5 +58,8 @@
     <PackageReference Include="System.DirectoryServices" Version="9.0.0" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Clients\Attacks\RPC-DCOM\" />
+  </ItemGroup>
   
 </Project>

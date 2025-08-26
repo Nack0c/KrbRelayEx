@@ -10,6 +10,7 @@ namespace SMBLibrary.Services
         rOpenSCManagerW = 15,
         rOpenServiceW = 16,
         rQueryServiceConfigW = 17,
+        rDeleteService = 2,
         rStartServiceW = 19,
     }
 }

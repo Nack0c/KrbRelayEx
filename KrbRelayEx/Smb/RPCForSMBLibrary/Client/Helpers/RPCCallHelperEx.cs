@@ -52,7 +52,7 @@ namespace SMBLibrary.Client.Helpers
             requestPDU.AllocationHint = (uint)requestPDU.Data.Length;
             byte[] input = requestPDU.GetBytes();
             status = NamedPipeShare.DeviceIOControl(pipeHandle, (uint)IoControlCode.FSCTL_PIPE_TRANSCEIVE, input, out output, maxTransmitFragmentSize);
-            if (status != NTStatus.STATUS_SUCCESS)
+            if (status != NTStatus.STATUS_SUCCESS || OpNum==2)
             {
                 return status;
             }
@@ -127,6 +127,52 @@ namespace SMBLibrary.Client.Helpers
                 responseData = ByteUtils.Concatenate(responseData, responsePDU.Data);
             }
             outputData = (O)Activator.CreateInstance(typeof(O), new object[] { responseData });
+            return NTStatus.STATUS_SUCCESS;
+        }
+        public NTStatus ExecuteCall<O>(ushort OpNum, byte[] inputArgs)
+        {
+            byte[] output;
+            NTStatus status;
+            //outputData = default(O);
+
+            RequestPDU requestPDU = new RequestPDU();
+            requestPDU.Flags = PacketFlags.FirstFragment | PacketFlags.LastFragment;
+            requestPDU.DataRepresentation.CharacterFormat = CharacterFormat.ASCII;
+            requestPDU.DataRepresentation.ByteOrder = ByteOrder.LittleEndian;
+            requestPDU.DataRepresentation.FloatingPointRepresentation = FloatingPointRepresentation.IEEE;
+            requestPDU.OpNum = OpNum;
+            requestPDU.Data = inputArgs;
+            requestPDU.AllocationHint = (uint)requestPDU.Data.Length;
+            byte[] input = requestPDU.GetBytes();
+            status = NamedPipeShare.DeviceIOControl(pipeHandle, (uint)IoControlCode.FSCTL_PIPE_TRANSCEIVE, input, out output, maxTransmitFragmentSize);
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                return status;
+            }
+            ResponsePDU responsePDU = RPCPDU.GetPDU(output, 0) as ResponsePDU;
+            if (responsePDU == null)
+            {
+                status = NTStatus.STATUS_NOT_SUPPORTED;
+                return status;
+            }
+
+            byte[] responseData = responsePDU.Data;
+            while ((responsePDU.Flags & PacketFlags.LastFragment) == 0)
+            {
+                status = NamedPipeShare.ReadFile(out output, pipeHandle, 0, maxTransmitFragmentSize);
+                if (status != NTStatus.STATUS_SUCCESS)
+                {
+                    return status;
+                }
+                responsePDU = RPCPDU.GetPDU(output, 0) as ResponsePDU;
+                if (responsePDU == null)
+                {
+                    status = NTStatus.STATUS_NOT_SUPPORTED;
+                    return status;
+                }
+                responseData = ByteUtils.Concatenate(responseData, responsePDU.Data);
+            }
+            //outputData = (O)Activator.CreateInstance(typeof(O), new object[] { responseData });
             return NTStatus.STATUS_SUCCESS;
         }
 
